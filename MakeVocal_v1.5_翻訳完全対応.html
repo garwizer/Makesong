@@ -1,0 +1,506 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MakeVocal Studio v1.5</title><style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#151e33;--line:#30415f;--blue:#65b5ff;--text:#edf3ff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,'Segoe UI',sans-serif}header{padding:18px 24px;background:#101a30;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}h1{font-size:22px;margin:0}h2{font-size:17px;margin:0 0 14px}h3{margin:12px 0;font-size:14px}small,.muted{color:#a9bbd7}.grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px;padding:18px;max-width:1500px;margin:auto}.panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:17px;margin-bottom:16px}button,input,textarea,select{font:inherit}button{background:#233657;color:white;border:1px solid #456188;border-radius:8px;padding:9px 12px;cursor:pointer}button:hover{background:#34527b}button.primary{background:#1968bd}button.danger{background:#79314b}button:disabled{opacity:.4;cursor:not-allowed}input[type=number],input[type=text],textarea,select{width:100%;padding:9px;background:#0c1527;border:1px solid #3b5274;border-radius:8px;color:white}input[type=range]{width:100%}textarea{min-height:210px;resize:vertical;line-height:1.7}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}.row>*{flex-shrink:0}.row input[type=number]{width:90px}label{display:block;margin:12px 0 5px;color:#c8d7ef}.drop{border:2px dashed #5076a7;padding:22px;text-align:center;border-radius:12px;background:#11223c;cursor:pointer}.drop.drag{background:#1a4870}.pill{padding:4px 9px;background:#263b5e;border-radius:99px;font-size:12px}.take{border:1px solid #354b70;border-radius:10px;padding:10px;margin:9px 0;background:#111b30}.take.active{border-color:#66bdff}.takehead{display:flex;align-items:center;justify-content:space-between;gap:8px}.take button{padding:5px 8px}.parts{max-height:460px;overflow:auto}.segment{background:#10233c;border:1px solid #385f8c;border-radius:9px;padding:10px;margin:8px 0}.segment input{width:80px!important}.segment.selected{outline:2px solid #70c8ff;background:#1a304b}.segment .row label{margin:0}.segment .row input{width:94px!important}.editBar{padding:12px;border:1px solid #416a94;background:#10223c;border-radius:10px;margin:12px 0}.editBar .row input{width:100px}.editBar .row select{width:190px}.editBar .muted{line-height:1.6}.quick{padding:6px 9px}.previewReady{color:#79e6af}.previewDirty{color:#ffcc89}.timeline{height:70px;background:#0a1426;border:1px solid #3b557c;border-radius:8px;position:relative;overflow:hidden;margin:12px 0}.block{position:absolute;top:8px;height:50px;border-radius:5px;background:#256ca2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:12px 5px;font-size:12px;border:1px solid #69b9ed}.timeline.seekable{cursor:crosshair;touch-action:none}.vocalDrag{touch-action:none;cursor:grab!important}.vocalDrag.dragging{cursor:grabbing!important;z-index:5;outline:2px solid #fff}.moveHelp{color:#b1c9ed;font-size:12px;line-height:1.6}.timeline.seekable:hover{border-color:#69b9ed}.playhead{position:absolute;top:0;bottom:0;width:3px;background:#ffdc73;pointer-events:none;z-index:3;box-shadow:0 0 7px #ffdc73}.playhead:after{content:"▼";position:absolute;top:-5px;left:-5px;color:#ffdc73;font-size:12px}.lyrics{height:170px;overflow:auto;white-space:pre-wrap;background:#091323;padding:20px;border-radius:10px;font-size:22px;line-height:1.7;text-align:center}.status{color:#93d7ff;min-height:20px}.hint{line-height:1.7;color:#a8bad6}.meter{height:9px;background:#071221;border-radius:99px;overflow:hidden}.meter>div{height:100%;width:0;background:#41dba2;transition:width .08s}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tag{color:#7fcaff}footer{text-align:center;padding:20px;color:#8b9cbb}@media(max-width:980px){.grid{grid-template-columns:1fr}}@media(max-width:550px){.two{grid-template-columns:1fr}}
+.modal{position:fixed;inset:0;background:#050916e8;z-index:100;display:none;align-items:center;justify-content:center;padding:24px}.modal.show{display:flex}.modalContent{width:min(1100px,98vw);height:min(750px,94vh);background:#131d31;border:1px solid #41638a;border-radius:14px;padding:14px;display:flex;flex-direction:column}.modalContent iframe{flex:1;width:100%;border:1px solid #3b5274;border-radius:8px;background:white}.seekNote{font-size:12px;color:#8ebfe7;margin:-5px 0 8px}
+/* 集中して歌える専用録音ビュー */
+.recordModal{z-index:120;padding:16px;overflow:auto;align-items:stretch}
+.recordWindow{width:min(1200px,100%);min-height:min(670px,calc(100vh - 32px));max-height:calc(100vh - 32px);margin:auto;background:#10192c;border:1px solid #496489;border-radius:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 22px 70px #0009}
+.recordTop{padding:16px 21px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#172440;border-bottom:1px solid #344e75;flex-wrap:wrap}
+.recordTop h2{margin:0;font-size:21px}
+.recordLayout{display:grid;grid-template-columns:minmax(300px,1fr) minmax(290px,.85fr);gap:0;min-height:0;flex:1}
+.recordControls{padding:26px;display:flex;flex-direction:column;justify-content:center;gap:15px;min-width:0}
+.recordControls .recordActions{display:flex;gap:10px;flex-wrap:wrap}
+.recordControls .recordActions button{padding:14px 18px;font-size:16px;min-height:48px}
+.recordPanel{border:1px solid #344d71;background:#0b1529;padding:18px;border-radius:12px}
+.recordTime{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.recordProgress{width:100%;height:12px;accent-color:#6bbaff}
+.recordStatus{font-size:16px;line-height:1.5;min-height:45px}
+.recordLyricsArea{min-width:0;border-left:1px solid #344e75;background:linear-gradient(155deg,#162643,#0d1629);padding:23px;display:flex;flex-direction:column;gap:12px}
+.recordLyricsArea h3{margin:2px 0 0;font-size:18px}
+.recordLyricsArea .lyrics{height:auto;min-height:290px;flex:1;max-height:calc(100vh - 220px);text-align:left;overflow:auto;font-size:24px;line-height:2;background:#081122;border:1px solid #354d6f}
+.recordMiniHint{font-size:13px;line-height:1.8;color:#a6bfdc}
+@media(max-width:760px){.recordModal{padding:7px}.recordWindow{max-height:calc(100vh - 14px)}.recordLayout{grid-template-columns:1fr;overflow:auto}.recordControls{padding:16px;justify-content:flex-start}.recordLyricsArea{border-left:0;border-top:1px solid #344e75;padding:16px}.recordLyricsArea .lyrics{min-height:200px;max-height:350px}.recordTime{font-size:30px}}
+
+.langPicker{display:flex;align-items:center;gap:8px;margin-left:auto}.langPicker select{width:auto;min-width:135px;background:#1c3151;border-color:#6084b2;font-weight:600}.langPicker label{margin:0;font-size:12px}.langHint{font-size:11px;color:#adc3e1}@media(max-width:550px){.langPicker{width:100%;justify-content:flex-end}}
+
+.sampleBox{border:1px solid #456b95;border-radius:11px;padding:13px;margin:0 0 14px;background:var(--panel)}.sampleBox p{margin:7px 0 10px}.sampleBox #sampleInfo{display:block;margin-top:8px}:root[data-theme="light"] .sampleBox{background:#edf5ff;border-color:#a8c6e3}
+/* v0.9 テーマ切替: 編集・録音・作曲画面を通じて配色を統一 */
+.themePicker{display:flex;gap:8px;align-items:center;white-space:nowrap}
+.themePicker label{margin:0;color:var(--text);font-size:12px}
+.themePicker button{min-width:155px;font-weight:650}
+@media(max-width:550px){.themePicker{margin-left:auto}}
+:root[data-theme="light"]{color-scheme:light;--bg:#f3f6fb;--panel:#ffffff;--line:#cbd7e7;--blue:#1264ad;--text:#172337}
+:root[data-theme="light"] body{background:var(--bg);color:var(--text)}
+:root[data-theme="light"] header{background:#e7eef8;border-color:var(--line)}
+:root[data-theme="light"] small,:root[data-theme="light"] .muted{color:#536781}
+:root[data-theme="light"] label{color:#354960}
+:root[data-theme="light"] .panel{background:#fff;border-color:#cbd7e7;box-shadow:0 1px 2px #263a5410}
+:root[data-theme="light"] button{background:#e8f0fc;color:#1b3556;border-color:#a9bfda}
+:root[data-theme="light"] button:hover{background:#d4e5fa}
+:root[data-theme="light"] button.primary{background:#176bbd;color:#fff;border-color:#115393}
+:root[data-theme="light"] button.primary:hover{background:#12589f}
+:root[data-theme="light"] button.danger{background:#b53854;color:#fff;border-color:#9e2543}
+:root[data-theme="light"] input[type=number],:root[data-theme="light"] input[type=text],:root[data-theme="light"] textarea,:root[data-theme="light"] select{background:#fff;color:#142943;border-color:#a8b9d0}
+:root[data-theme="light"] input[type=range]{accent-color:#176bbd}
+:root[data-theme="light"] .drop{background:#edf5ff;border-color:#709ccc;color:#213f64}
+:root[data-theme="light"] .drop.drag{background:#d5e9ff}
+:root[data-theme="light"] .pill{background:#dfeafb;color:#27476d}
+:root[data-theme="light"] .take{background:#f5f8fd;border-color:#a9beda}
+:root[data-theme="light"] .take.active{border-color:#137ac2}
+:root[data-theme="light"] .segment{background:#eaf2fc;border-color:#9dbddf}
+:root[data-theme="light"] .segment.selected{background:#dbeeff;outline-color:#3184d2}
+:root[data-theme="light"] .editBar{background:#edf5ff;border-color:#98b9df}
+:root[data-theme="light"] .editBar .muted{color:#526783}
+:root[data-theme="light"] .timeline{background:#e5edf7;border-color:#adc3da}
+:root[data-theme="light"] .timeline.seekable:hover{border-color:#317fb5}
+:root[data-theme="light"] .block{background:#2776b4;color:#fff;border-color:#1c5c8f}
+:root[data-theme="light"] .playhead{background:#e95b14;box-shadow:0 0 3px #af420c}
+:root[data-theme="light"] .playhead:after{color:#d65312}
+:root[data-theme="light"] .vocalDrag.dragging{outline-color:#26354b}
+:root[data-theme="light"] .moveHelp,:root[data-theme="light"] .seekNote{color:#46668a}
+:root[data-theme="light"] .lyrics{background:#ecf3fd;color:#192e4a}
+:root[data-theme="light"] .hint{color:#506782}
+:root[data-theme="light"] .status,:root[data-theme="light"] .tag{color:#096495}
+:root[data-theme="light"] .meter{background:#dce7f3}
+:root[data-theme="light"] .previewReady{color:#147348}
+:root[data-theme="light"] .previewDirty{color:#985c10}
+:root[data-theme="light"] footer{color:#536781}
+:root[data-theme="light"] .modal{background:#1c2b3dbb}
+:root[data-theme="light"] .modalContent{background:#f8fbff;border-color:#9cb5d4}
+:root[data-theme="light"] .modalContent iframe{border-color:#9cb5d4}
+:root[data-theme="light"] .recordWindow{background:#fff;border-color:#b0c3da;box-shadow:0 22px 70px #17283f44}
+:root[data-theme="light"] .recordTop{background:#e9f2fd;border-color:#bfd0e4}
+:root[data-theme="light"] .recordPanel{background:#f0f6ff;border-color:#bbcee3}
+:root[data-theme="light"] .recordLyricsArea{background:linear-gradient(155deg,#f3f8ff,#e4effc);border-color:#b9cee5}
+:root[data-theme="light"] .recordLyricsArea .lyrics{background:#fff;border-color:#b7cce5}
+:root[data-theme="light"] .recordMiniHint{color:#4d698a}
+:root[data-theme="light"] .langPicker select{background:#fff;color:#173454;border-color:#85a6ce}
+:root[data-theme="light"] .langHint{color:#496582}
+:root[data-theme="light"] .themePicker label{color:#243d5d}
+
+/* v1.0: テーマ変更時だけ、画面全体の色をゆっくり補間する。位置や再生バーはアニメーションしない。 */
+:root.theme-animate body,
+:root.theme-animate body *:not(iframe),
+:root.theme-animate body *::before,
+:root.theme-animate body *::after {
+  transition-property: background-color, color, border-color, box-shadow, outline-color, fill, stroke;
+  transition-duration: 950ms;
+  transition-timing-function: ease-in-out;
+}
+/* グラデーションは通常CSSでは途中色を補間できないため、録音画面の背景のみ単色を補間 */
+:root.theme-animate .recordLyricsArea{background-image:none!important;background-color:#162643}
+:root.theme-animate[data-theme="light"] .recordLyricsArea{background-color:#e4effc}
+@media (prefers-reduced-motion:reduce){
+ :root.theme-animate body,:root.theme-animate body *,:root.theme-animate body *::before,:root.theme-animate body *::after {transition-duration:0ms!important}
+}
+/* v1.4: 録音ボタンはサイト最上部。ベスト部分の編集と区間FXは一つの編集エリアに統合。 */
+.headerRecord button{font-size:15px;padding:12px 20px;border-radius:12px;min-height:46px;white-space:nowrap}
+.fxIntegrated{margin:16px 0 14px;padding:16px;border-radius:12px;border:1px solid var(--line);background:var(--panel)}
+.fxIntegrated h3{font-size:15px;margin:0 0 10px}
+.fxIntegrated .hint{margin:10px 0}
+.fxIntegrated .row{margin-top:10px}
+:root[data-theme="light"] .fxIntegrated{background:#f8fbff;border-color:#b6cbe5}
+@media(max-width:650px){.headerRecord{order:-1;width:100%}.headerRecord button{width:100%}.fxIntegrated{padding:12px}}
+</style></head><body><header><h1>🎙️ MakeVocal <small>Studio v1.5</small></h1><div class="headerRecord"><button id="openRecordStudio" class="primary">🎙️ 録音画面を開く</button></div><div class="row"><span class="pill">🎵 BGM編集</span><span class="pill">🎤 10テイク録音</span><span class="pill">✂️ ベスト部分を合成</span></div><div class="langPicker"><label for="uiLanguage" id="langLabel">🌐 言語</label><select id="uiLanguage" aria-label="表示言語"><option value="ja">日本語</option><option value="zh">中文（简体）</option><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="pt-BR">Português (Brasil)</option><option value="pt-PT">Português (Portugal)</option></select></div><div class="themePicker"><label for="themeToggle" id="themeLabel">🌙 ダークモード</label><button id="themeToggle" type="button" aria-label="ホワイトモードに切り替える" aria-pressed="false">☀️ ホワイトモード</button></div></header><div class="grid"><aside>
+<section class="panel"><h2>① 音楽を読み込む</h2><div class="sampleBox"><strong>🎵 お試しサンプル</strong><p class="hint">BGM・仮歌2テイク・歌詞・編集済みクリップを一度に読み込みます。録音不要でカットや移動を試せるよ！</p><button id="loadSample" class="primary">✨ サンプル曲を読み込む（約16秒）</button><span id="sampleInfo" class="muted" role="status"></span></div><div class="drop" id="drop">🎵 音声ファイルをドラッグ＆ドロップ<br><small>またはクリックして選択（WAV / MP3など）</small></div><input type="file" id="file" accept="audio/*" hidden><p id="fileInfo" class="muted">まだ音楽がありません</p><div class="row"><button id="openMakeBGM" class="primary">🎹 MakeBGMで作曲</button><button id="importBGM">📥 MakeBGMのWAVを読み込む</button></div><p class="hint">MakeBGMで作った曲をWAVで書き出して、ここにドラッグ＆ドロップすればすぐ歌えるよ。</p><div class="row"><button id="addTrack">＋ 同じ曲を末尾に追加</button><button id="clearTrack">曲をクリア</button></div><p class="hint">曲の一部分をカットして並べたり、繰り返して長くできます。編集後のBGMを聴きながら録音できます。</p></section>
+<section class="panel"><h2>② 歌詞を用意</h2><textarea id="lyricsInput" placeholder="ここに歌詞を入力してください。&#10;&#10;改行もそのまま表示されます。"></textarea><div class="row"><button id="showLyrics">歌詞を表示・更新</button></div></section>
+<section class="panel"><h2>③ マイク設定</h2><button id="mic">🎤 マイクを許可</button><p id="micInfo" class="muted">マイク未接続</p><div class="meter"><div id="level"></div></div><label>マイクモニター</label><p class="hint">ハウリング防止のため、自分の声はスピーカーに返しません。ヘッドホン推奨。</p><label>BGM音量</label><input type="range" id="bgmVolume" min="0" max="1" step=".01" value=".65"><label>歌声音量（書き出し）</label><input type="range" id="vocalVolume" min="0" max="2" step=".05" value="1"></section>
+</aside><main>
+<section class="panel"><h2>🎼 BGMの編集</h2><div class="row"><button id="playBgm">▶ BGMを再生</button><button id="stopBgm">■ 停止</button><button id="rewindBgm">⏮ 最初に戻る</button><span id="bgmTime">0:00 / 0:00</span></div><div class="timeline seekable" id="bgmTimeline" title="クリック・ドラッグで再生位置を変更"><div id="bgmBlocks"></div><div class="playhead" id="bgmHead"></div></div><p class="seekNote">🖱 タイムラインをクリック・ドラッグすると再生バーを動かせるよ。再生中も移動可能。</p><input type="range" id="seekBgm" min="0" max="0" value="0" step="0.01" aria-label="BGMの再生位置"><div class="row"><label style="margin:0">追加する範囲（秒）</label><input id="trimStart" type="number" value="0" min="0" step=".1" title="開始秒"><span>〜</span><input id="trimEnd" type="number" value="10" min="0" step=".1" title="終了秒"><button id="addRange">＋ 範囲を追加</button></div><div id="bgmSegments" class="parts"></div><p class="muted">範囲は読み込んだ音楽の時間を指定。順番の変更・削除も可能。</p></section>
+<section class="panel"><h2>🎤 録音スタジオ <span class="pill" id="count">0 / 10 テイク</span></h2><p class="hint">録音は専用画面で集中して行えます。録音中は右側に大きな歌詞を表示し、編集画面と分けて使えます。</p><div class="row"><button id="listenMix">▶ 完成イメージを試聴</button><button id="stopPreview">■ プレビュー停止</button><span id="previewInfo" class="muted">未作成</span></div><h3>🎧 録音テイク一覧</h3><div id="takes" class="parts"><p class="muted">録音するとここに表示されます。最大10回。</p></div></section>
+<section class="panel"><h2>✂️ ベスト部分をつなぎ合わせる</h2><p class="hint">各区間の「開始」「終了」は<strong>曲の再生開始からの秒数</strong>。同じ位置のテイクを切り替えて、良かった部分だけをつなげられます。録音はBGM開始と同時に始まるので、タイミングが合わせやすい仕組みです。</p><div class="row"><label style="margin:0">曲の位置（秒）</label><input type="number" id="partStart" value="0" min="0" step=".1"><span>〜</span><input type="number" id="partEnd" value="5" min="0" step=".1"><select id="partTake" style="max-width:180px"><option value="">テイクを選択</option></select><button id="addPart">＋ ベスト部分を追加</button></div><div class="timeline seekable" id="vocalTimeline" title="クリック・ドラッグで再生位置を変更"><div id="vocalBlocks"></div><div class="playhead" id="vocalHead"></div></div><div class="editBar"><h3>✂️ 歌声のカット・つなぎ直し</h3><p class="muted">採用区間をタイムライン上で左右にドラッグして移動できるよ。移動しても歌声の中身は変わらない。開始・終了位置でカット、再生バーで分割も可能。元の録音データは残ります。</p><div class="row"><label>選択中の区間</label><strong id="editingName">なし</strong><span id="selectedInfo" class="muted"></span></div><div class="row"><label>開始 (秒)<input id="editStart" type="number" min="0" step=".01" disabled></label><label>終了 (秒)<input id="editEnd" type="number" min="0" step=".01" disabled></label><button id="applyEdit" disabled>✂️ カット位置を適用</button><label>移動先（秒）<input id="moveStart" type="number" min="0" step="0.01" disabled></label><button id="movePart" disabled>↔ テイクを移動</button><button id="splitPart" disabled>✂️ 再生バーで分割</button><button id="deletePart" class="danger" disabled>削除</button></div><div class="fxIntegrated" id="vocalFxPanel"><h3>🎛️ 選択したベスト部分のエフェクト</h3><p class="hint">同じタイムラインで歌声クリップを選択すれば、カット・移動・エフェクト設定をまとめて編集できます。途中の数秒だけにかけたい場合は、先に再生バーで分割してください。</p><p id="fxTarget" class="tag" role="status">対象：クリップを選択してください</p><label for="vocalFx">エフェクトの種類</label><select id="vocalFx"><option value="none">なし（元の声）</option><option value="muffled">🔇 こもった声（ローパス）</option><option value="telephone">☎️ 電話・無線風</option><option value="echo">🔁 エコー</option><option value="reverb">🏛️ リバーブ（残響）</option><option value="distortion">⚡ 歪んだ声</option><option value="bright">✨ 明るくはっきりした声</option></select><label for="fxStrength">効果の強さ：<strong id="fxStrengthValue">65%</strong></label><input type="range" id="fxStrength" min="0" max="100" value="65" step="1"><div class="row"><button id="fxApply" class="primary" type="button" disabled>✓ この区間に適用</button><button id="fxOff" type="button" disabled>♻️ この区間の効果を解除</button><span class="muted" id="fxDescription">エフェクトは無効です。</span></div><p class="hint">区間を選択 → エフェクトと強さを指定 →「この区間に適用」。完成版の試聴・WAV書き出しに反映されます。元の録音は変更されません。</p></div><div class="row"><button id="undoEdit">↶ 編集を取り消す</button><button id="listenFromHead">▶ 再生バーから完成版を試聴</button><button id="listenSelected">▶ 選択区間を試聴</button></div></div><div id="parts" class="parts"><p class="muted">まだベスト部分が選ばれていません。</p></div><div class="row"><button id="exportWav" class="primary">⬇ 完成曲をWAVで保存</button><button id="exportBgm">⬇ BGMのみWAV保存</button></div><p class="hint">完成曲はBGM＋選択した歌声のミックス。録音音声はマイクのみを保存するため、BGMが二重にならないようヘッドホンを使ってね。</p></section>
+</main></div><div id="recordModal" class="modal recordModal" role="dialog" aria-modal="true" aria-labelledby="recordModalTitle"><div class="recordWindow">
+<div class="recordTop"><div><h2 id="recordModalTitle">🎙️ MakeVocal 録音専用スタジオ</h2><small>歌詞を見ながらBGMに合わせて歌おう</small></div><div class="row"><span class="pill" id="recordTakeCount">0 / 10 テイク</span><button id="closeRecordStudio">✕ 編集画面に戻る</button></div></div>
+<div class="recordLayout"><div class="recordControls">
+<div class="recordPanel"><div class="muted">録音・再生位置</div><div class="recordTime" id="recordTime">0:00 <small>/ 0:00</small></div><input class="recordProgress" id="recordSeek" type="range" value="0" min="0" max="0" step="0.01" aria-label="録音スタジオ内の再生位置"><div class="recordMiniHint">録音中は曲の最初からBGMが流れます。録音中のシーク操作は無効です。</div></div>
+<div class="recordActions"><button id="record" class="primary">🔴 録音開始</button><button id="stopRecord" class="danger" disabled>■ 録音終了</button></div>
+<div class="recordActions"><button id="studioPlayBgm">▶ BGM確認</button><button id="studioStopBgm">■ 停止</button><button id="studioMic">🎤 マイクを許可</button></div>
+<div id="recordStatus" class="status recordStatus" aria-live="polite">マイクを許可してから録音してください。</div>
+<div class="recordPanel"><div class="muted">🎙️ マイク入力レベル</div><div class="meter" style="margin-top:11px"><div id="recordLevel"></div></div><p class="recordMiniHint">ヘッドホンを使うと、BGMがマイクに入りにくくなります。録音を終了してから編集画面へ戻ってください。</p></div>
+</div><div class="recordLyricsArea"><h3>📜 歌詞モニター</h3><div class="recordMiniHint">歌詞は左側の「② 歌詞を用意」で変更できます。</div><div class="lyrics" id="lyricsView">ここに歌詞が表示されます</div></div></div></div></div><div id="makeBGMModal" class="modal"><div class="modalContent"><div class="row" style="justify-content:space-between"><strong>🎹 MakeBGM — 閉じても作曲画面を保持</strong><button id="closeMakeBGM">✕ 閉じる</button></div><div class="row"><button id="makeBGMNewTab">↗ 別タブで開く（おすすめ）</button><span class="muted">✕ は画面を隠すだけ。作曲内容を保持します。別タブ利用もおすすめ。</span></div><iframe id="makeBGMFrame" title="MakeBGM" loading="lazy"></iframe></div></div><footer>MakeVocal Studio — ブラウザーで動く歌声制作ツール / プロジェクトの録音データはページを閉じると消えます</footer>
+<script>
+'use strict';const $=id=>document.getElementById(id);let ctx,sourceBuffer=null,bgmSegments=[],takes=[],parts=[],micStream=null,micSource=null,analyser=null,mediaRecorder=null,recChunks=[],recStart=0,recBgmStart=0,playSources=[],playTimer=null,playStarted=0,playingDuration=0,recording=false,seekPosition=0,playMode="",playBuffer=null,selectedPart=-1,undoStack=[],previewVersion=0,renderedVersion=-1,previewRequest=0;
+// v1.1: ローカル生成のデモ曲。外部ネットワーク・マイク権限は必要ありません。
+function sampleTone(buffer,sr,from,to,freq,volume,kind='sine'){
+ const data=buffer.getChannelData(0),right=buffer.numberOfChannels>1?buffer.getChannelData(1):data;
+ const a=Math.max(0,Math.floor(from*sr)),b=Math.min(data.length,Math.floor(to*sr));
+ const fade=Math.min(.035,(to-from)/4);
+ for(let i=a;i<b;i++){
+  const time=i/sr,local=time-from,env=Math.min(1,local/fade,(to-time)/fade);
+  const phase=2*Math.PI*freq*local;
+  const wave=kind==='bass'?Math.sin(phase)+.22*Math.sin(2*phase):kind==='bell'?Math.sin(phase)+.27*Math.sin(3*phase):Math.sin(phase)+.12*Math.sin(2*phase);
+  const value=volume*Math.max(0,env)*wave;
+  data[i]+=value;right[i]+=value*(kind==='bell'?.86:.96);
+ }
+}
+function makeSampleSong(){
+ const ac=audioCtx(),sr=22050,secs=16,notes=[261.63,329.63,392,329.63,293.66,349.23,440,392];
+ const music=ac.createBuffer(2,sr*secs,sr);
+ for(let beat=0;beat<32;beat++){
+  const t=beat*.5;
+  sampleTone(music,sr,t,t+.42,[130.81,146.83,174.61,130.81][Math.floor(beat/8)],.13,'bass');
+  if(beat%2===0){sampleTone(music,sr,t+.02,t+.18,notes[(beat/2)%8]*2,.055,'bell');}
+  if(beat%4===2)sampleTone(music,sr,t,t+.08,700,.025,'bell');
+ }
+ const vocal1=ac.createBuffer(2,sr*secs,sr),vocal2=ac.createBuffer(2,sr*secs,sr);
+ const melody=[392,440,493.88,523.25,493.88,440,392,349.23,392,440,523.25,587.33,523.25,493.88,440,392];
+ for(let i=0;i<melody.length;i++){
+  const t=2+i*.75;
+  if(t>=15.5)break;
+  sampleTone(vocal1,sr,t,t+.62,melody[i],.18,'sine');
+  sampleTone(vocal2,sr,t,t+.62,melody[i]*(i%4===0?1.004:1),.17,'sine');
+ }
+ return {music,vocal1,vocal2};
+}
+$('loadSample').addEventListener('click',()=>{
+ if(recording){alert('録音中はサンプルを読み込めません。録音を終了してね');return}
+ if(sourceBuffer||takes.length||parts.length||$('lyricsInput').value.trim()){
+  if(!confirm('現在のBGM・テイク・歌詞・編集内容をサンプルに置き換えます。よろしいですか？'))return;
+ }
+ try{
+  stopAll(true);const {music,vocal1,vocal2}=makeSampleSong();
+  sourceBuffer=music;bgmSegments=[{start:0,end:16}];
+  const id1='sampleA',id2='sampleB';
+  takes=[{id:id1,name:'サンプル仮歌 A（電子音）',buffer:vocal1,blob:encodeWav(vocal1)},
+         {id:id2,name:'サンプル仮歌 B（電子音）',buffer:vocal2,blob:encodeWav(vocal2)}];
+  parts=[{takeId:id1,start:2,end:8,sourceStart:2},{takeId:id2,start:8,end:14,sourceStart:8}];
+  selectedPart=0;undoStack=[];$('fileInfo').textContent='🎵 サンプルBGM（自動生成・16秒）';$('trimStart').value='0';$('trimEnd').value='16';
+  $('lyricsInput').value='♪ MakeVocal で歌おう\n♪ 音を並べてつくろう\n♪ 何度も歌って選ぼう\n♪ 好きな曲に仕上げよう';
+  $('lyricsView').textContent=$('lyricsInput').value;
+  renderBgm();renderTakes();renderParts();invalidatePreview();updateHeads(0);
+  $('sampleInfo').textContent='✅ サンプル読込完了！「完成イメージを試聴」で確認できます。';
+  status('サンプルを読み込みました。録音テイクのカット・移動を試してみてね');
+ }catch(err){$('sampleInfo').textContent='読み込みに失敗: '+err.message;console.error(err)}
+});
+function audioCtx(){if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();return ctx}function status(s){$('recordStatus').textContent=s}function invalidatePreview(){previewVersion++;previewRequest++;if(playMode==='mix')stopAll();playBuffer=null;renderedVersion=-1;const el=$('previewInfo');if(el){el.textContent='変更あり・再生成が必要';el.className='previewDirty'}}function rememberEdit(){undoStack.push(JSON.stringify(parts));if(undoStack.length>40)undoStack.shift();invalidatePreview()}function fmt(t){t=Math.max(0,t||0);return Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0')}function duration(){return bgmSegments.reduce((a,s)=>a+s.end-s.start,0)}function updateHeads(t){const d=duration(),clamped=Math.max(0,Math.min(d,t||0)),percent=d?clamped/d*100:0;seekPosition=clamped;$('bgmHead').style.left=percent+'%';$('vocalHead').style.left=percent+'%';$('seekBgm').max=d||0;$('seekBgm').value=clamped;$('bgmTime').textContent=fmt(clamped)+' / '+fmt(d);$('recordTime').innerHTML=fmt(clamped)+' <small>/ '+fmt(d)+'</small>';$('recordSeek').max=d||0;$('recordSeek').value=clamped}
+function refreshPreviewButton(){const b=$('listenMix');if(!b)return;b.textContent=playMode==='mix'?'■ 完成版の試聴を停止':'▶ 完成イメージを試聴';b.setAttribute('aria-pressed',playMode==='mix'?'true':'false')}
+function stopAll(reset=false){playSources.forEach(s=>{try{s.stop()}catch(e){}});playSources=[];clearInterval(playTimer);playTimer=null;playMode='';refreshPreviewButton();if(reset)updateHeads(0)}
+function makeSource(buffer,start,offset,dur,dest,gain=1){if(dur<=0)return;const ac=audioCtx(),s=ac.createBufferSource(),g=ac.createGain();s.buffer=buffer;g.gain.value=gain;s.connect(g).connect(dest);s.start(start,offset,dur);playSources.push(s);return s}
+function currentPosition(){return playTimer?Math.min(duration(),(performance.now()-playStarted)/1000):seekPosition}
+function startProgress(at,total=duration()){
+ playStarted=performance.now()-at*1000;clearInterval(playTimer);
+ playTimer=setInterval(()=>{const t=(performance.now()-playStarted)/1000;updateHeads(Math.min(t,total));if(t>=total+0.08){stopAll();updateHeads(total);status('再生が終了しました')}},60)
+}
+function playBgm(at=seekPosition){if(!sourceBuffer||!bgmSegments.length)return false;stopAll();const ac=audioCtx();ac.resume();at=Math.max(0,Math.min(duration(),at));if(at>=duration())at=0;let pos=0;const now=ac.currentTime+.05;for(const seg of bgmSegments){const len=seg.end-seg.start;if(pos+len>at){const skip=Math.max(0,at-pos);makeSource(sourceBuffer,now+Math.max(0,pos-at),seg.start+skip,len-skip,ac.destination,Number($('bgmVolume').value))}pos+=len}playMode='bgm';updateHeads(at);startProgress(at);return true}
+function seekTo(t){const running=!!playTimer;const mode=playMode;const d=duration();t=Math.max(0,Math.min(d,t));if(recording){status('録音中は再生位置を変更できません');return}if(running&&mode==='bgm')playBgm(t);else if(running&&mode==='mix'&&playBuffer)playMixFrom(t);else{stopAll();updateHeads(t)}}
+function bindSeek(id){const el=$(id);let held=false;const set=e=>{const r=el.getBoundingClientRect();seekTo((e.clientX-r.left)/r.width*duration())};el.addEventListener('pointerdown',e=>{if(e.target.closest('.vocalDrag')||!sourceBuffer||recording)return;held=true;el.setPointerCapture(e.pointerId);set(e)});el.addEventListener('pointermove',e=>{if(held)set(e)});el.addEventListener('pointerup',()=>held=false);el.addEventListener('pointercancel',()=>held=false)}
+bindSeek('bgmTimeline');bindSeek('vocalTimeline');$('seekBgm').addEventListener('input',e=>seekTo(Number(e.target.value)));
+async function loadAudio(file){try{stopAll(true);playBuffer=null;const ac=audioCtx(),bytes=await file.arrayBuffer();sourceBuffer=await ac.decodeAudioData(bytes.slice(0));invalidatePreview();bgmSegments=[{start:0,end:sourceBuffer.duration}];$('trimEnd').value=sourceBuffer.duration.toFixed(1);$('fileInfo').textContent=file.name+' / '+fmt(sourceBuffer.duration);renderBgm();status('BGMを読み込みました')}catch(e){alert('音声を読み込めません: '+e.message)}}$('drop').onclick=()=>$('file').click();$('file').onchange=e=>e.target.files[0]&&loadAudio(e.target.files[0]);$('drop').ondragover=e=>{e.preventDefault();$('drop').classList.add('drag')};$('drop').ondragleave=()=>$('drop').classList.remove('drag');$('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('drag');const f=[...e.dataTransfer.files].find(f=>f.type.startsWith('audio/'));if(f)loadAudio(f)};
+function renderBgm(){invalidatePreview();const total=duration();stopAll();$('bgmSegments').innerHTML='';$('bgmBlocks').innerHTML='';let pos=0;bgmSegments.forEach((s,i)=>{const len=s.end-s.start;const el=document.createElement('div');el.className='segment';el.innerHTML=`<b>🎵 区間 ${i+1}</b>　${s.start.toFixed(1)}〜${s.end.toFixed(1)}秒 (${len.toFixed(1)}秒) <div class="row"><button data-act="up">↑</button><button data-act="down">↓</button><button data-act="del">削除</button></div>`;el.querySelector('[data-act=up]').onclick=()=>{if(i){[bgmSegments[i-1],bgmSegments[i]]=[bgmSegments[i],bgmSegments[i-1]];renderBgm()}};el.querySelector('[data-act=down]').onclick=()=>{if(i<bgmSegments.length-1){[bgmSegments[i+1],bgmSegments[i]]=[bgmSegments[i],bgmSegments[i+1]];renderBgm()}};el.querySelector('[data-act=del]').onclick=()=>{bgmSegments.splice(i,1);renderBgm()};$('bgmSegments').append(el);const block=document.createElement('div');block.className='block';block.textContent='区間 '+(i+1);block.style.left=(total?pos/total*100:0)+'%';block.style.width=(total?len/total*100:0)+'%';$('bgmBlocks').append(block);pos+=len});updateHeads(Math.min(seekPosition,total))}$('addRange').onclick=()=>{if(!sourceBuffer)return alert('まず音楽を読み込んでね');const a=Number($('trimStart').value),b=Number($('trimEnd').value);if(a<0||b<=a||b>sourceBuffer.duration+.001)return alert('開始・終了秒を確認してね');bgmSegments.push({start:a,end:b});renderBgm()};$('addTrack').onclick=()=>{if(sourceBuffer){bgmSegments.push({start:0,end:sourceBuffer.duration});renderBgm()}};$('clearTrack').onclick=()=>{stopAll();bgmSegments=[];renderBgm()};$('playBgm').onclick=()=>playBgm();$('stopBgm').onclick=()=>{stopAll();updateHeads(seekPosition)};$('rewindBgm').onclick=()=>seekTo(0);$('showLyrics').onclick=()=>$('lyricsView').textContent=$('lyricsInput').value||'歌詞を入力してね';$('lyricsInput').oninput=()=>{$('lyricsView').textContent=$('lyricsInput').value||'ここに歌詞が表示されます'};
+$('mic').onclick=async()=>{try{micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});const ac=audioCtx();micSource=ac.createMediaStreamSource(micStream);analyser=ac.createAnalyser();analyser.fftSize=512;micSource.connect(analyser);$('micInfo').textContent='🎤 マイク接続済み';const data=new Uint8Array(analyser.fftSize);function meter(){if(!analyser)return;analyser.getByteTimeDomainData(data);let sum=0;for(const x of data)sum+=((x-128)/128)**2;const rms=Math.sqrt(sum/data.length);$('level').style.width=Math.min(100,rms*380)+'%';$('recordLevel').style.width=Math.min(100,rms*380)+'%';requestAnimationFrame(meter)}meter();status('マイク準備完了。ヘッドホンを使って録音しよう')}catch(e){alert('マイクを使えません。HTTPSまたはlocalhostで開き、ブラウザーのマイク権限を許可してね。\n'+e.message)}};
+$('record').onclick=async()=>{if(!micStream)return alert('先にマイクを許可してね');if(takes.length>=10)return alert('10テイクまでです。不要なテイクを削除してね');if(!sourceBuffer||!duration())return alert('BGMを読み込んでね');try{await audioCtx().resume();stopAll();recChunks=[];const options=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?{mimeType:'audio/webm;codecs=opus'}:{};mediaRecorder=new MediaRecorder(micStream,options);mediaRecorder.ondataavailable=e=>{if(e.data.size)recChunks.push(e.data)};mediaRecorder.onstop=async()=>{try{const blob=new Blob(recChunks,{type:mediaRecorder.mimeType||'audio/webm'});const arr=await blob.arrayBuffer();const buf=await audioCtx().decodeAudioData(arr.slice(0));const id='take'+Date.now();takes.push({id,name:'テイク '+(takes.length+1),buffer:buf,blob});invalidatePreview();renderTakes();status('録音を保存しました。良かった区間を選んでね')}catch(e){status('録音の読み込みに失敗: '+e.message)}};mediaRecorder.start();recording=true;$('record').disabled=true;$('stopRecord').disabled=false;recStart=performance.now();playBgm(0);status('🔴 録音中… BGMに合わせて歌ってね');}catch(e){alert('録音開始エラー: '+e.message)}};$('stopRecord').onclick=()=>{if(mediaRecorder?.state==='recording')mediaRecorder.stop();recording=false;$('record').disabled=false;$('stopRecord').disabled=true;stopAll()};
+function renderTakes(){$('count').textContent=takes.length+' / 10 テイク';$('recordTakeCount').textContent=takes.length+' / 10 テイク';$('takes').innerHTML='';$('partTake').innerHTML='<option value="">テイクを選択</option>';takes.forEach((t,i)=>{const option=document.createElement('option');option.value=t.id;option.textContent=t.name;$('partTake').append(option);const el=document.createElement('div');el.className='take';el.innerHTML=`<div class="takehead"><b>🎤 ${t.name}</b><span>${fmt(t.buffer.duration)}</span></div><div class="row"><button data-act="play">▶ 試聴</button><button data-act="download">⬇ 保存</button><button data-act="delete">削除</button></div>`;el.querySelector('[data-act=play]').onclick=()=>{stopAll();makeSource(t.buffer,audioCtx().currentTime+.05,0,t.buffer.duration,audioCtx().destination)};el.querySelector('[data-act=download]').onclick=()=>saveBlob(t.blob,t.name+'.webm');el.querySelector('[data-act=delete]').onclick=()=>{takes.splice(i,1);rememberEdit();parts=parts.filter(p=>p.takeId!==t.id);selectedPart=-1;renderTakes();renderParts()};$('takes').append(el)});if(!takes.length)$('takes').innerHTML='<p class="muted">まだ録音がありません。</p>'}
+function getSelectedPart(){return selectedPart>=0?parts[selectedPart]:null}
+function updatePartEditor(){const p=getSelectedPart(),t=p&&takes.find(x=>x.id===p.takeId);$('editingName').textContent=p?(t?t.name:'不明なテイク')+' / 区間 '+(selectedPart+1):'なし';$('selectedInfo').textContent=p?`${p.start.toFixed(2)}秒〜${p.end.toFixed(2)}秒`:'';for(const id of ['editStart','editEnd','applyEdit','splitPart','deletePart','moveStart','movePart'])$(id).disabled=!p;if(p){$('editStart').value=p.start.toFixed(2);$('editEnd').value=p.end.toFixed(2);$('moveStart').value=p.start.toFixed(2)}}
+function addPartObj(tid,a,b){const t=takes.find(x=>x.id===tid);if(!t)return alert('テイクを選択してね');if(!Number.isFinite(a)||!Number.isFinite(b)||a<0||b<=a||b>t.buffer.duration+.01||b>duration()+.01)return alert('開始・終了秒を確認してね（曲と録音の長さ以内）');rememberEdit();parts.push({takeId:tid,start:a,end:b,sourceStart:a});selectedPart=parts.length-1;renderParts()}
+$('addPart').onclick=()=>addPartObj($('partTake').value,Number($('partStart').value),Number($('partEnd').value));
+$('applyEdit').onclick=()=>{const p=getSelectedPart();if(!p)return;
+ const a=Number($('editStart').value),b=Number($('editEnd').value),t=takes.find(x=>x.id===p.takeId);
+ const oldSource=p.sourceStart??p.start,source=oldSource+(a-p.start);
+ if(!t||![a,b,source].every(Number.isFinite)||a<0||b<=a||b>duration()+.01||source<0||source+(b-a)>t.buffer.duration+.01)return alert('範囲が正しくありません。左端をカットすると録音の読み取り開始も進みます。');
+ rememberEdit();p.sourceStart=source;p.start=a;p.end=b;renderParts();status('✂️ カット位置を変更しました');
+};
+function moveSelectedPart(to){const p=getSelectedPart();if(!p)return;const len=p.end-p.start;
+ if(!Number.isFinite(to)||to<0||to+len>duration()+.001)return alert('移動先が曲の範囲外です');
+ if(Math.abs(to-p.start)<.00001)return;
+ rememberEdit();p.start=to;p.end=to+len;renderParts();status('↔ 歌声の位置を移動しました。完成版を試聴して確認してね');
+}
+$('movePart').onclick=()=>moveSelectedPart(Number($('moveStart').value));
+$('splitPart').onclick=()=>{const p=getSelectedPart();if(!p)return;const at=seekPosition;if(at<=p.start+.02||at>=p.end-.02)return alert('再生バーを選択区間の内側に置いてね');rememberEdit();const source=p.sourceStart??p.start;const a={takeId:p.takeId,start:p.start,end:at,sourceStart:source,fxType:p.fxType,fxStrength:p.fxStrength},b={takeId:p.takeId,start:at,end:p.end,sourceStart:source+(at-p.start),fxType:p.fxType,fxStrength:p.fxStrength};parts.splice(selectedPart,1,a,b);renderParts();status('✂️ 選択区間を2つに分割しました。片方だけ削除・カット可能です')};
+$('deletePart').onclick=()=>{if(!getSelectedPart())return;rememberEdit();parts.splice(selectedPart,1);selectedPart=Math.min(parts.length-1,selectedPart);renderParts()};
+$('undoEdit').onclick=()=>{if(!undoStack.length)return status('これ以上取り消せません');parts=JSON.parse(undoStack.pop());invalidatePreview();selectedPart=Math.min(selectedPart,parts.length-1);renderParts();status('↶ 直前の採用区間編集を取り消しました')};
+function renderParts(){
+ $('parts').innerHTML='';$('vocalBlocks').innerHTML='';const total=duration();
+ parts.forEach((p,i)=>{const t=takes.find(t=>t.id===p.takeId);if(!t)return;
+  const el=document.createElement('div');el.className='segment'+(i===selectedPart?' selected':'');el.tabIndex=0;el.style.cursor='pointer';
+  el.innerHTML=`<b>${t.name} — 区間 ${i+1}</b>　${p.start.toFixed(2)}〜${p.end.toFixed(2)}秒 <small>（元音声 ${(p.sourceStart??p.start).toFixed(2)}秒〜）</small> <small>🎛️ ${p.fxType&&p.fxType!=='none'?((p.fxType==='muffled'?'こもり':p.fxType)+' '+(p.fxStrength??65)+'%'):'効果なし'}</small> <button data-delete class="quick danger">削除</button>`;
+  el.onclick=e=>{if(e.target.closest('button'))return;selectedPart=i;renderParts()};
+  el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectedPart=i;renderParts()}};
+  el.querySelector('[data-delete]').onclick=()=>{rememberEdit();parts.splice(i,1);selectedPart=-1;renderParts()};$('parts').append(el);
+  const block=document.createElement('div');block.className='block vocalDrag';
+  block.style.background=i===selectedPart?'#d166a6':'#9a427c';block.title='左右にドラッグして歌声を移動: '+t.name;
+  block.style.left=(total?p.start/total*100:0)+'%';block.style.width=(total?(p.end-p.start)/total*100:0)+'%';block.style.top=(i%2)*25+4+'px';block.style.height='23px';block.textContent=t.name;
+  block.addEventListener('pointerdown',e=>{if(recording||!total)return; e.stopPropagation();e.preventDefault();
+   selectedPart=i;const initialX=e.clientX,initialStart=p.start,clipLen=p.end-p.start,timelineWidth=$('vocalTimeline').getBoundingClientRect().width;
+   let last=initialStart,moved=false;block.setPointerCapture(e.pointerId);block.classList.add('dragging');
+   const onMove=ev=>{ev.stopPropagation();const dx=ev.clientX-initialX;if(Math.abs(dx)>3)moved=true;
+    last=Math.max(0,Math.min(total-clipLen,initialStart+dx/timelineWidth*total));
+    block.style.left=last/total*100+'%';};
+   const onUp=ev=>{ev.stopPropagation();block.removeEventListener('pointermove',onMove);block.removeEventListener('pointerup',onUp);block.removeEventListener('pointercancel',onCancel);
+    if(moved&&Math.abs(last-p.start)>.0001){moveSelectedPart(last)}else{renderParts()}};
+   const onCancel=()=>{block.removeEventListener('pointermove',onMove);block.removeEventListener('pointerup',onUp);block.removeEventListener('pointercancel',onCancel);renderParts()};
+   block.addEventListener('pointermove',onMove);block.addEventListener('pointerup',onUp);block.addEventListener('pointercancel',onCancel);
+  });
+  $('vocalBlocks').append(block);
+ });
+ if(!parts.length)$('parts').innerHTML='<p class="muted">まだベスト部分が選ばれていません。</p>';
+ updatePartEditor();
+ if(typeof syncFxSelection==='function')syncFxSelection();
+}
+// v1.2：歌声専用のエフェクトバス（Web Audio API / OfflineAudioContext）。
+// Dry/Wet の配線で原音を保ち、後から何度でも再編集できます。
+function makeVocalFxBus(offline,type,percent){
+ const input=offline.createGain(),amount=Math.max(0,Math.min(1,Number(percent)/100));
+ if(type==='none'||amount<=0){input.connect(offline.destination);return input}
+ const dry=offline.createGain(),wet=offline.createGain();
+ // エフェクトの種類によって、こもり・電話は置換、空間系は原音と合成。
+ const replace=['muffled','telephone','distortion','bright'].includes(type);
+ dry.gain.value=replace?1-amount:1;
+ wet.gain.value=replace?amount:amount*.75;
+ input.connect(dry);dry.connect(offline.destination);wet.connect(offline.destination);
+ if(type==='muffled'){
+   const lp=offline.createBiquadFilter();lp.type='lowpass';lp.frequency.value=320+700*(1-amount);lp.Q.value=.6;input.connect(lp);lp.connect(wet);
+ }else if(type==='telephone'){
+   const hp=offline.createBiquadFilter(),lp=offline.createBiquadFilter();hp.type='highpass';hp.frequency.value=340;lp.type='lowpass';lp.frequency.value=2300;input.connect(hp);hp.connect(lp);lp.connect(wet);
+ }else if(type==='echo'){
+   const delay=offline.createDelay(2),feedback=offline.createGain();delay.delayTime.value=.17+.22*amount;feedback.gain.value=.17+.48*amount;
+   input.connect(delay);delay.connect(wet);delay.connect(feedback);feedback.connect(delay);
+ }else if(type==='reverb'){
+   const convolver=offline.createConvolver(),sr=offline.sampleRate,seconds=1.2+1.8*amount,n=Math.floor(sr*seconds),impulse=offline.createBuffer(2,n,sr);
+   // 再現可能な疑似ランダム残響。毎回音が変わらないよう固定シード。
+   let seed=7321;for(let ch=0;ch<2;ch++){const data=impulse.getChannelData(ch);for(let i=0;i<n;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const rnd=seed/4294967296*2-1;data[i]=rnd*Math.pow(1-i/n,2.5)*.26}}
+   convolver.buffer=impulse;input.connect(convolver);convolver.connect(wet);
+ }else if(type==='distortion'){
+   const shaper=offline.createWaveShaper(),samples=2048,curve=new Float32Array(samples),k=6+85*amount;
+   for(let i=0;i<samples;i++){const x=2*i/(samples-1)-1;curve[i]=(1+k)*x/(1+k*Math.abs(x))}
+   shaper.curve=curve;shaper.oversample='2x';input.connect(shaper);shaper.connect(wet);
+ }else if(type==='bright'){
+   const shelf=offline.createBiquadFilter();shelf.type='highshelf';shelf.frequency.value=2200;shelf.gain.value=5+9*amount;input.connect(shelf);shelf.connect(wet);
+ }else{input.connect(offline.destination)}
+ return input;
+}
+const fxDescriptions={none:'エフェクトは無効です。',muffled:'高い音を削って、壁越しのようなこもった声に。',telephone:'低音と高音を削り、電話・無線のような声に。',echo:'歌声のあとに繰り返しが聞こえる効果。',reverb:'広い部屋やホールで歌うような響き。',distortion:'音を歪ませて、ざらついた声に。',bright:'高音を強調して、声を明るく。'};
+function updateFxControls(){
+ $('fxStrengthValue').textContent=$('fxStrength').value+'%';
+ $('fxDescription').textContent=fxDescriptions[$('vocalFx').value]||'';
+}
+function syncFxSelection(){
+ const p=getSelectedPart(),has=!!p;
+ $('fxApply').disabled=!has;$('fxOff').disabled=!has;
+ $('fxTarget').textContent=has?'対象：区間 '+(selectedPart+1)+'（'+p.start.toFixed(2)+'〜'+p.end.toFixed(2)+'秒）':'対象：下のタイムラインから歌声クリップを選択';
+ $('vocalFx').disabled=!has;$('fxStrength').disabled=!has;
+ $('vocalFx').value=has?(p.fxType||'none'):'none';
+ $('fxStrength').value=has?(p.fxStrength??65):65;
+ updateFxControls();
+}
+$('vocalFx').addEventListener('change',updateFxControls);
+$('fxStrength').addEventListener('input',updateFxControls);
+$('fxApply').addEventListener('click',()=>{
+ const p=getSelectedPart();if(!p)return;
+ rememberEdit();p.fxType=$('vocalFx').value;p.fxStrength=Number($('fxStrength').value);
+ renderParts();status('🎛️ 選択した区間だけにエフェクトを設定しました');
+});
+$('fxOff').addEventListener('click',()=>{
+ const p=getSelectedPart();if(!p)return;
+ rememberEdit();p.fxType='none';p.fxStrength=65;
+ renderParts();status('♻️ 選択区間のエフェクトを解除しました');
+});
+function buildOffline(withVocal){
+ if(!sourceBuffer||!duration())throw Error('BGMを読み込んでね');
+ const sr=sourceBuffer.sampleRate,secs=duration(),length=Math.max(1,Math.ceil(secs*sr));
+ const offline=new OfflineAudioContext(2,length,sr);
+ let pos=0;
+ // BGMを各区間の連結位置に配置。終端は音声バッファの長さ以内に制限。
+ for(const seg of bgmSegments){
+  const offset=Math.max(0,Math.min(seg.start,sourceBuffer.duration));
+  const len=Math.max(0,Math.min(seg.end-seg.start,sourceBuffer.duration-offset,secs-pos));
+  if(len>0){const source=offline.createBufferSource(),gain=offline.createGain();source.buffer=sourceBuffer;gain.gain.value=Number($('bgmVolume').value);source.connect(gain).connect(offline.destination);source.start(pos,offset,len)}
+  pos+=seg.end-seg.start;
+ }
+ if(withVocal){
+  for(const p of parts){
+   const take=takes.find(t=>t.id===p.takeId);if(!take)continue;
+   // 録音が曲より短い時に例外で全プレビューが中断されないようにする。
+   const at=Math.max(0,p.start),offset=Math.max(0,p.sourceStart??p.start);
+   const len=Math.max(0,Math.min(p.end-p.start,take.buffer.duration-offset,secs-at));
+   if(len<=0)continue;
+   const source=offline.createBufferSource(),gain=offline.createGain();source.buffer=take.buffer;
+   // 分割の境界で音量が不連続になってノイズが出るのを抑える（短いフェード）。
+   const volume=Number($('vocalVolume').value),fade=Math.min(.008,len/3);
+   gain.gain.setValueAtTime(0,at);
+   gain.gain.linearRampToValueAtTime(volume,at+fade);
+   gain.gain.setValueAtTime(volume,at+len-fade);
+   gain.gain.linearRampToValueAtTime(0,at+len);
+   const fxBus=makeVocalFxBus(offline,p.fxType||'none',p.fxStrength??65);
+   source.connect(gain).connect(fxBus);source.start(at,offset,len);
+  }
+ }
+ return offline.startRendering();
+}
+function encodeWav(buffer){const n=buffer.length,ch=2,out=new ArrayBuffer(44+n*ch*2),v=new DataView(out);const str=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i))};str(0,'RIFF');v.setUint32(4,36+n*ch*2,true);str(8,'WAVE');str(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);v.setUint32(24,buffer.sampleRate,true);v.setUint32(28,buffer.sampleRate*ch*2,true);v.setUint16(32,ch*2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,n*ch*2,true);const a=buffer.getChannelData(0),b=buffer.getChannelData(Math.min(1,buffer.numberOfChannels-1));let p=44;for(let i=0;i<n;i++){for(const x of [a[i],b[i]]){const y=Math.max(-1,Math.min(1,x));v.setInt16(p,y<0?y*32768:y*32767,true);p+=2}}return new Blob([out],{type:'audio/wav'})}function saveBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}async function exportAudio(vocal){try{status('WAVを書き出しています…');const buf=await buildOffline(vocal);saveBlob(encodeWav(buf),vocal?'MakeVocal_完成曲.wav':'MakeVocal_BGM.wav');status('書き出し完了！')}catch(e){alert('書き出しエラー: '+e.message)}}$('exportWav').onclick=()=>exportAudio(true);$('exportBgm').onclick=()=>exportAudio(false);function playMixFrom(at=0){
+ if(!playBuffer)return;
+ stopAll();
+ const ac=audioCtx();ac.resume();
+ const d=Math.min(duration(),playBuffer.duration);
+ if(d<=0)return;
+ at=Math.max(0,Math.min(d,at));if(at>=d)at=0;
+ const source=makeSource(playBuffer,ac.currentTime+.035,at,d-at,ac.destination);
+ playMode='mix';refreshPreviewButton();updateHeads(at);startProgress(at,d);
+ if(source)source.onended=()=>{if(playMode==='mix'&&playSources.includes(source)){stopAll();updateHeads(d);status('完成版の再生が終了しました')}};
+}
+async function playCompletedFrom(at=seekPosition){
+ if(playMode==='mix'){stopAll();status('■ 完成版の試聴を停止しました');return}
+ if(recording){status('録音中は完成版を試聴できません');return}
+ const request=++previewRequest;
+ try{
+  await audioCtx().resume();
+  if(!playBuffer||renderedVersion!==previewVersion){
+   status('完成イメージを準備中…');
+   const version=previewVersion;
+   const buf=await buildOffline(true);
+   // 再生準備中に再度押したり編集があった場合、古いリクエストを無効にする。
+   if(request!==previewRequest||version!==previewVersion)return;
+   playBuffer=buf;renderedVersion=version;
+   $('previewInfo').textContent='最新版を再生可能';$('previewInfo').className='previewReady';
+  }
+  if(request!==previewRequest)return;
+  playMixFrom(at);
+  status('▶ 完成版を再生中。同じボタンでもう一度押すと停止します');
+ }catch(e){if(request===previewRequest){status('試聴エラー: '+e.message);alert('試聴エラー: '+e.message)}}
+}
+$('listenMix').onclick=()=>{
+ if(playMode==='mix'){previewRequest++;stopAll();status('■ 完成版の試聴を停止しました');return}
+ // 準備中のボタン連打で古い再生が始まらないようにする。
+ playCompletedFrom(seekPosition)
+};
+$('stopPreview').onclick=()=>{previewRequest++;stopAll();status('■ 試聴を停止しました')};
+$('listenFromHead').onclick=()=>playCompletedFrom(seekPosition);
+$('listenSelected').onclick=async()=>{
+ const p=getSelectedPart();if(!p)return alert('区間を選択してね');
+ const request=++previewRequest;
+ try{
+  await audioCtx().resume();
+  if(!playBuffer||renderedVersion!==previewVersion){
+   const ver=previewVersion,buf=await buildOffline(true);
+   if(ver!==previewVersion||request!==previewRequest)return;
+   playBuffer=buf;renderedVersion=ver;
+   $('previewInfo').textContent='最新版を再生可能';$('previewInfo').className='previewReady';
+  }
+  if(request!==previewRequest)return;
+  stopAll();const a=Math.max(0,p.start),b=Math.min(p.end,playBuffer.duration);
+  if(b>a){makeSource(playBuffer,audioCtx().currentTime+.03,a,b-a,audioCtx().destination);updateHeads(a);status('▶ 選択した歌声の区間を再生中')}
+ }catch(e){status('区間試聴エラー: '+e.message)}
+};
+refreshPreviewButton();
+$('bgmVolume').addEventListener('input',invalidatePreview);$('vocalVolume').addEventListener('input',invalidatePreview);
+renderParts();
+// 録音画面の開閉。録音中に誤って閉じないようガードする。
+$('openRecordStudio').onclick=()=>{stopAll();$('lyricsView').textContent=$('lyricsInput').value||'歌詞を入力してね';$('recordModal').classList.add('show');$('recordModal').style.display='flex';updateHeads(seekPosition)};
+$('closeRecordStudio').onclick=()=>{if(recording){status('録音中です。先に「録音終了」を押してください。');return}stopAll();$('recordModal').classList.remove('show');$('recordModal').style.display='none'};
+$('studioMic').onclick=()=>$('mic').click();
+$('studioPlayBgm').onclick=()=>{if(!recording)playBgm(seekPosition)};
+$('studioStopBgm').onclick=()=>{if(!recording)stopAll()};
+$('recordSeek').oninput=e=>seekTo(Number(e.target.value));
+const makeBGMUrl='https://garwizer.github.io/MakeBGM/';
+let makeBGMLoaded=false;
+$('openMakeBGM').onclick=()=>{
+ $('makeBGMModal').classList.add('show');
+ // 初回だけ読み込む。再表示でsrcを再設定すると作曲データが初期化されるため禁止。
+ if(!makeBGMLoaded){$('makeBGMFrame').src=makeBGMUrl;makeBGMLoaded=true;}
+};
+$('closeMakeBGM').onclick=()=>{
+ // iframeを破棄しない。非表示でもMakeBGMの編集状態を保持する。
+ $('makeBGMModal').classList.remove('show');
+};
+$('makeBGMNewTab').onclick=()=>window.open(makeBGMUrl,'_blank','noopener,noreferrer');
+// 誤ってMakeVocalそのものを離れる場合にも警告（ブラウザーが対応する場合）。
+window.addEventListener('beforeunload',e=>{
+ if(sourceBuffer||takes.length||($('lyricsInput').value||'').trim()){e.preventDefault();e.returnValue='';}
+});
+$('importBGM').onclick=()=>$('file').click();
+</script>
+<script>
+(()=>{
+ const langs=['zh','en','fr','it','pt-BR','pt-PT'];
+ const dictionary={"🎛️ 歌声エフェクト":["🎛️ 人声音效","🎛️ Vocal effects","🎛️ Effets vocaux","🎛️ Effetti vocali","🎛️ Efeitos vocais","🎛️ Efeitos vocais"],"エフェクトの種類":["效果类型","Effect type","Type d'effet","Tipo di effetto","Tipo de efeito","Tipo de efeito"],"♻️ エフェクトを解除":["♻️ 关闭效果","♻️ Reset effect","♻️ Désactiver l'effet","♻️ Disattiva effetto","♻️ Desativar efeito","♻️ Desativar efeito"],"① 音楽を読み込む":["① 导入音乐","① Import music","① Importer la musique","① Importa musica","① Importar música","① Importar música"],"② 歌詞を用意":["② 准备歌词","② Prepare lyrics","② Préparer les paroles","② Prepara il testo","② Preparar letra","② Preparar letra"],"③ マイク設定":["③ 麦克风设置","③ Microphone settings","③ Réglages du micro","③ Impostazioni microfono","③ Configurações do microfone","③ Definições do microfone"],"🎼 BGMの編集":["🎼 编辑伴奏","🎼 Edit backing track","🎼 Modifier la musique","🎼 Modifica base musicale","🎼 Editar instrumental","🎼 Editar acompanhamento"],"🎧 録音テイク一覧":["🎧 录音列表","🎧 Recorded takes","🎧 Prises enregistrées","🎧 Elenco registrazioni","🎧 Lista de gravações","🎧 Lista de gravações"],"✂️ ベスト部分をつなぎ合わせる":["✂️ 拼接最佳片段","✂️ Combine best parts","✂️ Assembler les meilleurs passages","✂️ Unisci le parti migliori","✂️ Juntar os melhores trechos","✂️ Juntar as melhores partes"],"🎙️ 録音画面を開く":["🎙️ 打开录音室","🎙️ Open recording studio","🎙️ Ouvrir le studio","🎙️ Apri studio di registrazione","🎙️ Abrir estúdio","🎙️ Abrir estúdio"],"▶ 完成イメージを試聴":["▶ 试听成品","▶ Preview final mix","▶ Écouter le mix final","▶ Ascolta mix finale","▶ Ouvir mix final","▶ Ouvir mistura final"],"■ 完成版の試聴を停止":["■ 停止试听","■ Stop final preview","■ Arrêter l’écoute","■ Ferma anteprima","■ Parar prévia","■ Parar pré-escuta"],"■ プレビュー停止":["■ 停止预览","■ Stop preview","■ Arrêter l’aperçu","■ Ferma anteprima","■ Parar prévia","■ Parar pré-escuta"],"🎹 MakeBGMで作曲":["🎹 用 MakeBGM 作曲","🎹 Compose in MakeBGM","🎹 Composer avec MakeBGM","🎹 Componi con MakeBGM","🎹 Compor no MakeBGM","🎹 Compor no MakeBGM"],"📥 MakeBGMのWAVを読み込む":["📥 导入 MakeBGM WAV","📥 Import MakeBGM WAV","📥 Importer le WAV MakeBGM","📥 Importa WAV MakeBGM","📥 Importar WAV do MakeBGM","📥 Importar WAV do MakeBGM"],"＋ 同じ曲を末尾に追加":["＋ 在末尾重复歌曲","＋ Repeat track at end","＋ Répéter à la fin","＋ Ripeti brano alla fine","＋ Repetir faixa no final","＋ Repetir faixa no fim"],"曲をクリア":["清除歌曲","Clear track","Effacer la piste","Cancella traccia","Limpar faixa","Limpar faixa"],"歌詞を表示・更新":["显示／更新歌词","Show / update lyrics","Afficher / actualiser","Mostra / aggiorna testo","Mostrar / atualizar letra","Mostrar / atualizar letra"],"🎤 マイクを許可":["🎤 允许麦克风","🎤 Enable microphone","🎤 Activer le micro","🎤 Attiva microfono","🎤 Ativar microfone","🎤 Ativar microfone"],"マイク未接続":["麦克风未连接","Microphone not connected","Micro non connecté","Microfono non connesso","Microfone desconectado","Microfone não ligado"],"マイクモニター":["麦克风监听","Microphone monitor","Retour micro","Monitor microfono","Monitor do microfone","Monitor do microfone"],"BGM音量":["伴奏音量","Backing track volume","Volume musique","Volume base musicale","Volume do instrumental","Volume do acompanhamento"],"歌声音量（書き出し）":["人声音量（导出）","Vocal volume (export)","Volume voix (export)","Volume voce (export)","Volume vocal (exportação)","Volume vocal (exportação)"],"▶ BGMを再生":["▶ 播放伴奏","▶ Play backing track","▶ Lire la musique","▶ Riproduci base","▶ Reproduzir instrumental","▶ Reproduzir acompanhamento"],"■ 停止":["■ 停止","■ Stop","■ Arrêter","■ Ferma","■ Parar","■ Parar"],"⏮ 最初に戻る":["⏮ 返回开头","⏮ Back to start","⏮ Retour au début","⏮ Torna all’inizio","⏮ Voltar ao início","⏮ Voltar ao início"],"＋ 範囲を追加":["＋ 添加区间","＋ Add range","＋ Ajouter un extrait","＋ Aggiungi intervallo","＋ Adicionar trecho","＋ Adicionar trecho"],"未作成":["未生成","Not created","Non créé","Non creato","Não criado","Não criado"],"↑":["↑","↑","↑","↑","↑","↑"],"↓":["↓","↓","↓","↓","↓","↓"],"削除":["删除","Delete","Supprimer","Elimina","Excluir","Eliminar"],"録音するとここに表示されます。最大10回。":["录音会显示在这里，最多10次。","Recordings appear here (up to 10).","Les prises apparaissent ici (10 max).","Le registrazioni appaiono qui (max 10).","As gravações aparecem aqui (até 10).","As gravações aparecem aqui (até 10)."],"📜 歌詞モニター":["📜 歌词显示","📜 Lyrics monitor","📜 Affichage des paroles","📜 Testo della canzone","📜 Letra da música","📜 Letra da música"],"🎙️ マイク入力レベル":["🎙️ 麦克风输入电平","🎙️ Microphone input level","🎙️ Niveau du micro","🎙️ Livello microfono","🎙️ Nível do microfone","🎙️ Nível do microfone"],"✕ 編集画面に戻る":["✕ 返回编辑","✕ Back to editor","✕ Retour à l’éditeur","✕ Torna all’editor","✕ Voltar ao editor","✕ Voltar ao editor"],"✕ 閉じる":["✕ 关闭","✕ Close","✕ Fermer","✕ Chiudi","✕ Fechar","✕ Fechar"],"↗ 別タブで開く（おすすめ）":["↗ 在新标签页打开（推荐）","↗ Open in new tab (recommended)","↗ Nouvel onglet (conseillé)","↗ Apri in nuova scheda (consigliato)","↗ Abrir em nova aba (recomendado)","↗ Abrir num novo separador (recomendado)"],"🌐 言語":["🌐 语言","🌐 Language","🌐 Langue","🌐 Lingua","🌐 Idioma","🌐 Idioma"],"録音開始":["开始录音","Start recording","Démarrer l’enregistrement","Inizia registrazione","Iniciar gravação","Iniciar gravação"],"録音終了":["结束录音","Stop recording","Arrêter l’enregistrement","Ferma registrazione","Parar gravação","Parar gravação"],"▶ 録音開始":["▶ 开始录音","▶ Start recording","▶ Enregistrer","▶ Registra","▶ Iniciar gravação","▶ Iniciar gravação"],"■ 録音終了":["■ 结束录音","■ Stop recording","■ Arrêter","■ Ferma registrazione","■ Parar gravação","■ Parar gravação"],"テイク":["录音","Take","Prise","Registrazione","Gravação","Gravação"],"取り消し":["撤销","Undo","Annuler","Annulla","Desfazer","Desfazer"],"保存":["保存","Save","Enregistrer","Salva","Salvar","Guardar"],"選択":["选择","Select","Sélectionner","Seleziona","Selecionar","Selecionar"],"言語":["语言","Language","Langue","Lingua","Idioma","Idioma"],"🎵 BGM編集":["🎵 编辑伴奏","🎵 Edit BGM","🎵 Modifier la musique","🎵 Modifica BGM","🎵 Editar BGM","🎵 Editar BGM"],"🎤 10テイク録音":["🎤 录制10遍","🎤 10 recording takes","🎤 10 prises vocales","🎤 10 registrazioni","🎤 10 gravações","🎤 10 gravações"],"✂️ ベスト部分を合成":["✂️ 合并最佳片段","✂️ Combine best takes","✂️ Assembler les meilleures prises","✂️ Unisci le parti migliori","✂️ Juntar melhores trechos","✂️ Juntar melhores partes"],"🎵 お試しサンプル":["🎵 试听示例","🎵 Try the demo","🎵 Démo à essayer","🎵 Prova la demo","🎵 Experimentar demonstração","🎵 Experimentar demonstração"],"BGM・仮歌2テイク・歌詞・編集済みクリップを一度に読み込みます。録音不要でカットや移動を試せるよ！":["一次加载伴奏、2条示例人声、歌词和剪辑片段，无需录音即可练习裁剪与移动！","Load BGM, 2 demo takes, lyrics and edited clips. Practice cutting and moving without recording!","Chargez la musique, 2 prises démo, les paroles et les clips. Testez le montage sans enregistrer !","Carica BGM, 2 voci demo, testo e clip. Prova tagli e spostamenti senza registrare!","Carregue BGM, 2 gravações de exemplo, letra e clipes. Experimente editar sem gravar!","Carregue BGM, 2 gravações de exemplo, letra e clips. Experimente editar sem gravar!"],"✨ サンプル曲を読み込む（約16秒）":["✨ 加载示例曲（约16秒）","✨ Load sample song (~16 sec)","✨ Charger le morceau démo (~16 s)","✨ Carica brano demo (~16 s)","✨ Carregar música demo (~16 s)","✨ Carregar música demo (~16 s)"],"🎵 音声ファイルをドラッグ＆ドロップ":["🎵 拖放音频文件","🎵 Drag & drop an audio file","🎵 Glisser-déposer un fichier audio","🎵 Trascina qui un file audio","🎵 Arraste e solte um áudio","🎵 Arraste e largue um áudio"],"またはクリックして選択（WAV / MP3など）":["或单击选择（WAV / MP3等）","or click to choose (WAV / MP3 etc.)","ou cliquez pour choisir (WAV / MP3…)","oppure clicca per scegliere (WAV / MP3…) ","ou clique para escolher (WAV / MP3 etc.)","ou clique para escolher (WAV / MP3 etc.)"],"まだ音楽がありません":["尚未加载音乐","No music loaded","Aucune musique chargée","Nessuna musica caricata","Nenhuma música carregada","Nenhuma música carregada"],"MakeBGMで作った曲をWAVで書き出して、ここにドラッグ＆ドロップすればすぐ歌えるよ。":["将MakeBGM制作的歌曲导出为WAV，再拖入此处就能录唱。","Export your MakeBGM song as WAV and drop it here to start singing.","Exportez le morceau MakeBGM en WAV et déposez-le ici pour chanter.","Esporta il brano da MakeBGM in WAV e trascinalo qui per cantare.","Exporte o áudio do MakeBGM em WAV e arraste para cá para cantar.","Exporte o áudio do MakeBGM em WAV e arraste para aqui para cantar."],"曲の一部分をカットして並べたり、繰り返して長くできます。編集後のBGMを聴きながら録音できます。":["可以裁剪、排列或循环片段延长音乐，并边听编辑后的伴奏边录音。","Trim, arrange and loop song sections. Record while listening to the edited BGM.","Coupez, réorganisez et répétez des passages. Enregistrez avec la musique modifiée.","Taglia, riordina e ripeti parti del brano. Registra sulla base modificata.","Corte, reorganize e repita trechos. Grave ouvindo o BGM editado.","Corte, reorganize e repita trechos. Grave ao ouvir o BGM editado."],"ハウリング防止のため、自分の声はスピーカーに返しません。ヘッドホン推奨。":["为防止啸叫，不会通过扬声器回放麦克风声音。建议戴耳机。","Microphone audio is not played through speakers to prevent feedback. Headphones recommended.","Pour éviter le larsen, le micro n'est pas diffusé par les haut-parleurs. Casque conseillé.","Per evitare il feedback, il microfono non viene riprodotto dagli altoparlanti. Usa le cuffie.","O microfone não é reproduzido nos alto-falantes para evitar microfonia. Use fones.","O microfone não é reproduzido nas colunas para evitar feedback. Use auscultadores."],"🖱 タイムラインをクリック・ドラッグすると再生バーを動かせるよ。再生中も移動可能。":["🖱 点击或拖动时间轴移动播放指针；播放时也可以操作。","🖱 Click or drag the timeline to seek, even during playback.","🖱 Cliquez ou glissez sur la timeline pour déplacer la lecture, même en cours de lecture.","🖱 Clicca o trascina sulla timeline per spostare la riproduzione, anche durante l'ascolto.","🖱 Clique ou arraste na linha do tempo para avançar, mesmo durante a reprodução.","🖱 Clique ou arraste na linha temporal para navegar, mesmo durante a reprodução."],"追加する範囲（秒）":["添加范围（秒）","Range to add (sec)","Plage à ajouter (s)","Intervallo da aggiungere (s)","Trecho a adicionar (s)","Trecho a adicionar (s)"],"範囲は読み込んだ音楽の時間を指定。順番の変更・削除も可能。":["按已加载音频的时间选择片段，也可调整顺序或删除。","Specify a range within the loaded music. Reorder or delete ranges.","Choisissez une plage de la musique. Réorganisez ou supprimez-la.","Seleziona un intervallo del brano. Puoi riordinare o eliminare.","Selecione um trecho do áudio. É possível reordenar ou excluir.","Selecione um trecho do áudio. Pode reordenar ou eliminar."],"🎤 録音スタジオ":["🎤 录音室","🎤 Recording studio","🎤 Studio d'enregistrement","🎤 Studio di registrazione","🎤 Estúdio de gravação","🎤 Estúdio de gravação"],"録音は専用画面で集中して行えます。録音中は右側に大きな歌詞を表示し、編集画面と分けて使えます。":["录音在专用界面进行，右侧显示大字歌词，与编辑界面分离。","Record in a dedicated studio with large lyrics on the right, separate from editing.","Enregistrez dans un studio dédié, avec les paroles en grand à droite.","Registra in uno studio dedicato, con il testo grande sulla destra.","Grave em uma tela exclusiva, com a letra em destaque à direita.","Grave num ecrã próprio, com a letra em destaque à direita."],"各区間の「開始」「終了」は":["每段的“开始”“结束”是","The “start” and “end” of each clip are","Le « début » et la « fin » de chaque clip sont","Gli orari di inizio e fine di ogni clip sono","O início e fim de cada trecho são","O início e fim de cada trecho são"],"曲の再生開始からの秒数":["从歌曲开始播放起的秒数","seconds from the start of the song","des secondes depuis le début du morceau","secondi dall'inizio del brano","segundos desde o início da música","segundos desde o início da música"],"。同じ位置のテイクを切り替えて、良かった部分だけをつなげられます。録音はBGM開始と同時に始まるので、タイミングが合わせやすい仕組みです。":["。可切换相同位置的不同录音，只拼接优秀片段。录音与BGM同时开始，方便对齐。",". Switch between takes at the same position and combine the best parts. Recording starts with the BGM to help alignment.",". Changez de prise au même endroit pour assembler les meilleurs passages. L’enregistrement démarre avec la musique.",". Cambia registrazione nello stesso punto e unisci le parti migliori. La registrazione parte insieme al BGM.",". Alterne gravações na mesma posição e junte as melhores partes. A gravação começa com o BGM.",". Alterne gravações na mesma posição e junte as melhores partes. A gravação começa com o BGM."],"曲の位置（秒）":["位置（秒）","Song position (sec)","Position dans le morceau (s)","Posizione nel brano (s)","Posição na música (s)","Posição na música (s)"],"テイクを選択":["选择录音","Choose a take","Choisir une prise","Scegli una registrazione","Selecionar gravação","Selecionar gravação"],"＋ ベスト部分を追加":["＋ 添加最佳片段","＋ Add best part","＋ Ajouter un meilleur passage","＋ Aggiungi parte migliore","＋ Adicionar melhor trecho","＋ Adicionar melhor trecho"],"✂️ 歌声のカット・つなぎ直し":["✂️ 裁剪、拼接人声","✂️ Cut & rearrange vocals","✂️ Couper et réorganiser la voix","✂️ Taglia e riordina le voci","✂️ Cortar e reorganizar vocais","✂️ Cortar e reorganizar vozes"],"採用区間をタイムライン上で左右にドラッグして移動できるよ。移動しても歌声の中身は変わらない。開始・終了位置でカット、再生バーで分割も可能。元の録音データは残ります。":["左右拖动时间轴上的片段可移动位置；也能裁剪起止点、按播放指针分割，原录音不变。","Drag selected clips left or right to move them. Trim their ends or split at the playhead. Original recordings stay intact.","Glissez les clips pour les déplacer. Rognez les bords ou coupez à la tête de lecture. Les prises d'origine sont conservées.","Trascina le clip per spostarli. Taglia i bordi o dividi alla testina. Gli originali restano intatti.","Arraste os clipes para movê-los. Corte as bordas ou divida na posição atual. Os originais são preservados.","Arraste os clips para os mover. Corte as pontas ou divida na posição atual. Os originais são preservados."],"選択中の区間":["当前片段","Selected clip","Clip sélectionné","Clip selezionata","Trecho selecionado","Trecho selecionado"],"なし":["无","None","Aucun","Nessuno","Nenhum","Nenhum"],"開始 (秒)":["开始（秒）","Start (sec)","Début (s)","Inizio (s)","Início (s)","Início (s)"],"終了 (秒)":["结束（秒）","End (sec)","Fin (s)","Fine (s)","Fim (s)","Fim (s)"],"✂️ カット位置を適用":["✂️ 应用裁剪","✂️ Apply trim","✂️ Appliquer la coupe","✂️ Applica taglio","✂️ Aplicar corte","✂️ Aplicar corte"],"移動先（秒）":["移动到（秒）","Move to (sec)","Déplacer vers (s)","Sposta a (s)","Mover para (s)","Mover para (s)"],"↔ テイクを移動":["↔ 移动片段","↔ Move take","↔ Déplacer la prise","↔ Sposta registrazione","↔ Mover gravação","↔ Mover gravação"],"✂️ 再生バーで分割":["✂️ 按播放指针分割","✂️ Split at playhead","✂️ Couper à la tête de lecture","✂️ Dividi alla testina","✂️ Dividir na posição atual","✂️ Dividir na posição atual"],"🎛️ 選択したベスト部分のエフェクト":["🎛️ 所选片段的音效","🎛️ Effects for selected clip","🎛️ Effets du clip sélectionné","🎛️ Effetti della clip selezionata","🎛️ Efeitos do trecho selecionado","🎛️ Efeitos do trecho selecionado"],"同じタイムラインで歌声クリップを選択すれば、カット・移動・エフェクト設定をまとめて編集できます。途中の数秒だけにかけたい場合は、先に再生バーで分割してください。":["在同一时间轴上选择人声片段，即可裁剪、移动和设置效果。只给几秒加效果时，请先分割。","Select a vocal clip on the same timeline to trim, move and apply effects. Split first to affect only a few seconds.","Sélectionnez un clip sur la même timeline pour le couper, déplacer et appliquer des effets. Scindez-le pour ne traiter que quelques secondes.","Seleziona una clip per tagliarla, spostarla e applicare effetti. Dividila per modificare solo pochi secondi.","Selecione o clipe na linha do tempo para cortar, mover e aplicar efeitos. Divida antes para afetar só alguns segundos.","Selecione o clip na linha temporal para cortar, mover e aplicar efeitos. Divida antes para afetar só alguns segundos."],"対象：クリップを選択してください":["目标：请选择片段","Target: select a clip","Cible : sélectionnez un clip","Destinazione: seleziona clip","Alvo: selecione um trecho","Alvo: selecione um trecho"],"なし（元の声）":["无（原声）","None (original voice)","Aucun (voix d'origine)","Nessuno (voce originale)","Nenhum (voz original)","Nenhum (voz original)"],"🔇 こもった声（ローパス）":["🔇 闷声（低通）","🔇 Muffled voice (low-pass)","🔇 Voix étouffée (passe-bas)","🔇 Voce ovattata (passa-basso)","🔇 Voz abafada (passa-baixa)","🔇 Voz abafada (passa-baixo)"],"☎️ 電話・無線風":["☎️ 电话／无线电音效","☎️ Phone / radio voice","☎️ Voix téléphone / radio","☎️ Voce telefono / radio","☎️ Voz de telefone / rádio","☎️ Voz de telefone / rádio"],"🔁 エコー":["🔁 回声","🔁 Echo","🔁 Écho","🔁 Eco","🔁 Eco","🔁 Eco"],"🏛️ リバーブ（残響）":["🏛️ 混响","🏛️ Reverb","🏛️ Réverbération","🏛️ Riverbero","🏛️ Reverberação","🏛️ Reverberação"],"⚡ 歪んだ声":["⚡ 失真声音","⚡ Distorted voice","⚡ Voix saturée","⚡ Voce distorta","⚡ Voz distorcida","⚡ Voz distorcida"],"✨ 明るくはっきりした声":["✨ 清亮人声","✨ Bright / clear voice","✨ Voix claire / brillante","✨ Voce chiara / brillante","✨ Voz brilhante / clara","✨ Voz brilhante / clara"],"効果の強さ：":["效果强度：","Effect strength:","Intensité de l'effet :","Intensità effetto:","Intensidade do efeito:","Intensidade do efeito:"],"✓ この区間に適用":["✓ 应用于此片段","✓ Apply to this clip","✓ Appliquer au clip","✓ Applica alla clip","✓ Aplicar ao trecho","✓ Aplicar ao trecho"],"♻️ この区間の効果を解除":["♻️ 清除此片段音效","♻️ Remove clip effect","♻️ Supprimer l'effet du clip","♻️ Rimuovi effetto clip","♻️ Remover efeito do trecho","♻️ Remover efeito do trecho"],"エフェクトは無効です。":["音效已关闭。","Effect disabled.","Effet désactivé.","Effetto disattivato.","Efeito desativado.","Efeito desativado."],"区間を選択 → エフェクトと強さを指定 →「この区間に適用」。完成版の試聴・WAV書き出しに反映されます。元の録音は変更されません。":["选择片段 → 设置音效与强度 → 点击“应用于此片段”。预览与WAV导出均生效，原录音不变。","Select clip → choose effect and strength → Apply. Included in final preview and WAV export; original recording unchanged.","Sélectionnez un clip → effet et intensité → Appliquer. Inclus dans l’aperçu et l’export WAV ; prise d’origine intacte.","Seleziona la clip → effetto e intensità → Applica. Si sente nell'anteprima e nell'esportazione WAV; originale intatto.","Selecione trecho → efeito e intensidade → Aplicar. Incluído na prévia e exportação WAV; gravação original intacta.","Selecione trecho → efeito e intensidade → Aplicar. Incluído na pré-escuta e exportação WAV; gravação original intacta."],"↶ 編集を取り消す":["↶ 撤销编辑","↶ Undo edit","↶ Annuler la modification","↶ Annulla modifica","↶ Desfazer edição","↶ Anular edição"],"▶ 再生バーから完成版を試聴":["▶ 从播放指针试听成品","▶ Preview from playhead","▶ Écouter depuis la tête de lecture","▶ Ascolta dalla testina","▶ Ouvir a partir da posição atual","▶ Ouvir a partir da posição atual"],"▶ 選択区間を試聴":["▶ 试听所选片段","▶ Preview selected clip","▶ Écouter le clip sélectionné","▶ Ascolta clip selezionata","▶ Ouvir trecho selecionado","▶ Ouvir trecho selecionado"],"まだベスト部分が選ばれていません。":["尚未选择最佳片段。","No best parts selected yet.","Aucun meilleur passage sélectionné.","Nessuna parte migliore selezionata.","Nenhum melhor trecho selecionado.","Nenhum melhor trecho selecionado."],"⬇ 完成曲をWAVで保存":["⬇ 导出完整歌曲WAV","⬇ Export final WAV","⬇ Exporter le WAV final","⬇ Esporta WAV finale","⬇ Exportar WAV final","⬇ Exportar WAV final"],"⬇ BGMのみWAV保存":["⬇ 仅导出BGM WAV","⬇ Export BGM-only WAV","⬇ Exporter la musique seule en WAV","⬇ Esporta solo BGM in WAV","⬇ Exportar só BGM em WAV","⬇ Exportar apenas BGM em WAV"],"完成曲はBGM＋選択した歌声のミックス。録音音声はマイクのみを保存するため、BGMが二重にならないようヘッドホンを使ってね。":["成品为BGM与所选人声的混合。录音只保存麦克风声音，请使用耳机避免BGM重复录入。","The final mix combines BGM and selected vocals. Only microphone audio is recorded; use headphones to avoid doubling the BGM.","Le mix final réunit musique et voix choisies. Seul le micro est enregistré ; utilisez un casque pour éviter le doublon.","Il mix finale include BGM e voci selezionate. Si registra solo il microfono: usa le cuffie per evitare doppia musica.","A mixagem final junta BGM e vozes selecionadas. Só o microfone é gravado; use fones para evitar BGM duplicado.","A mistura final junta BGM e vozes selecionadas. Só o microfone é gravado; use auscultadores para evitar BGM duplicado."],"🎙️ MakeVocal 録音専用スタジオ":["🎙️ MakeVocal 专用录音室","🎙️ MakeVocal recording studio","🎙️ Studio d'enregistrement MakeVocal","🎙️ Studio di registrazione MakeVocal","🎙️ Estúdio de gravação MakeVocal","🎙️ Estúdio de gravação MakeVocal"],"歌詞を見ながらBGMに合わせて歌おう":["看着歌词跟随伴奏演唱","Sing along with the BGM while reading lyrics","Chantez sur la musique en suivant les paroles","Canta sulla base seguendo il testo","Cante com o BGM acompanhando a letra","Cante com o BGM seguindo a letra"],"録音・再生位置":["录音／播放位置","Recording / playback position","Position d'enregistrement / lecture","Posizione registrazione / riproduzione","Posição de gravação / reprodução","Posição de gravação / reprodução"],"録音中は曲の最初からBGMが流れます。録音中のシーク操作は無効です。":["录音时伴奏从头播放，无法跳转播放位置。","BGM starts from the beginning when recording; seeking is disabled.","Pendant l'enregistrement, la musique démarre au début et la recherche est désactivée.","Durante la registrazione, la base parte dall'inizio e non puoi spostarti.","Ao gravar, o BGM começa do início e não é possível avançar.","Ao gravar, o BGM começa do início e não é possível avançar."],"🔴 録音開始":["🔴 开始录音","🔴 Start recording","🔴 Démarrer l'enregistrement","🔴 Inizia registrazione","🔴 Iniciar gravação","🔴 Iniciar gravação"],"▶ BGM確認":["▶ 试听BGM","▶ Check BGM","▶ Vérifier la musique","▶ Ascolta BGM","▶ Ouvir BGM","▶ Ouvir BGM"],"マイクを許可してから録音してください。":["请先允许麦克风权限再录音。","Allow microphone access before recording.","Autorisez le micro avant d'enregistrer.","Autorizza il microfono prima di registrare.","Permita o microfone antes de gravar.","Autorize o microfone antes de gravar."],"ヘッドホンを使うと、BGMがマイクに入りにくくなります。録音を終了してから編集画面へ戻ってください。":["使用耳机可以减少伴奏录入麦克风。请结束录音后再返回编辑界面。","Headphones reduce BGM bleed into the microphone. Stop recording before returning to the editor.","Un casque réduit la reprise de la musique dans le micro. Arrêtez l'enregistrement avant de revenir.","Le cuffie evitano che la base entri nel microfono. Ferma la registrazione prima di tornare all'editor.","Fones reduzem a captação do BGM pelo microfone. Pare de gravar antes de voltar ao editor.","Auscultadores reduzem o BGM captado pelo microfone. Pare a gravação antes de voltar ao editor."],"歌詞は左側の「② 歌詞を用意」で変更できます。":["可在左侧“② 准备歌词”修改歌词。","Edit lyrics in “② Prepare lyrics” on the left.","Modifiez les paroles dans « ② Préparer les paroles » à gauche.","Modifica il testo in “② Prepara il testo” a sinistra.","Edite a letra em “② Preparar letra” à esquerda.","Edite a letra em “② Preparar letra” à esquerda."],"ここに歌詞が表示されます":["歌词显示在这里","Lyrics appear here","Les paroles apparaissent ici","Il testo appare qui","A letra aparece aqui","A letra aparece aqui"],"🎹 MakeBGM — 閉じても作曲画面を保持":["🎹 MakeBGM — 关闭后保留作曲界面","🎹 MakeBGM — Keep work when closed","🎹 MakeBGM — Projet conservé à la fermeture","🎹 MakeBGM — Progetto conservato alla chiusura","🎹 MakeBGM — Trabalho mantido ao fechar","🎹 MakeBGM — Trabalho mantido ao fechar"],"✕ は画面を隠すだけ。作曲内容を保持します。別タブ利用もおすすめ。":["✕ 只会隐藏画面，不会清空作曲内容。也建议使用新标签页。","✕ only hides the window; your work remains. A separate tab is also recommended.","✕ masque la fenêtre sans effacer la composition. Un autre onglet est conseillé.","✕ nasconde solo la finestra, la composizione resta. Consigliata una scheda separata.","✕ só oculta a janela; o trabalho continua. Recomendamos outra aba.","✕ apenas oculta a janela; o trabalho mantém-se. Recomendamos outro separador."],"MakeVocal Studio — ブラウザーで動く歌声制作ツール / プロジェクトの録音データはページを閉じると消えます":["MakeVocal Studio — 浏览器人声制作工具 / 关闭页面后录音数据会丢失","MakeVocal Studio — Browser vocal studio / Recordings are lost when the page closes","MakeVocal Studio — Studio vocal sur navigateur / Les prises sont perdues à la fermeture","MakeVocal Studio — Studio vocale nel browser / Le registrazioni si perdono chiudendo la pagina","MakeVocal Studio — Estúdio vocal no navegador / As gravações são perdidas ao fechar a página","MakeVocal Studio — Estúdio vocal no navegador / As gravações desaparecem ao fechar a página"],"まだ録音がありません。":["还没有录音。","No recordings yet.","Aucun enregistrement pour le moment.","Nessuna registrazione.","Nenhuma gravação ainda.","Ainda não há gravações."],"🎵 サンプルBGM（自動生成・16秒）":["🎵 示例BGM（自动生成・16秒）","🎵 Sample BGM (generated, 16 sec)","🎵 BGM démo (généré, 16 s)","🎵 BGM demo (generato, 16 s)","🎵 BGM demo (gerado, 16 s)","🎵 BGM demo (gerado, 16 s)"],"サンプル仮歌 A（電子音）":["示例人声 A（电子音）","Sample vocal A (synth)","Voix démo A (synthé)","Voce demo A (sintetizzatore)","Vocal demo A (sintetizador)","Voz demo A (sintetizador)"],"サンプル仮歌 B（電子音）":["示例人声 B（电子音）","Sample vocal B (synth)","Voix démo B (synthé)","Voce demo B (sintetizzatore)","Vocal demo B (sintetizador)","Voz demo B (sintetizador)"],"✅ サンプル読込完了！「完成イメージを試聴」で確認できます。":["✅ 示例已加载！点击“试听成品”确认。","✅ Sample loaded! Use “Preview final mix” to check.","✅ Démo chargée ! Écoutez le mix final.","✅ Demo caricata! Ascolta il mix finale.","✅ Demo carregada! Ouça a mixagem final.","✅ Demo carregada! Ouça a mistura final."],"変更あり・再生成が必要":["有修改，需要重新生成","Changes made; rebuild needed","Modifications : régénération nécessaire","Modifiche: rigenerazione necessaria","Alterado; necessário recriar","Alterado; necessário recriar"],"最新版を再生可能":["可播放最新版本","Latest version ready","Dernière version prête","Ultima versione pronta","Versão mais recente pronta","Versão mais recente pronta"],"🎤 マイク接続済み":["🎤 麦克风已连接","🎤 Microphone connected","🎤 Micro connecté","🎤 Microfono connesso","🎤 Microfone conectado","🎤 Microfone ligado"],"歌詞を入力してね":["请输入歌词","Enter lyrics","Saisissez les paroles","Inserisci il testo","Digite a letra","Introduza a letra"],"🎵 区間":["🎵 区间","🎵 Section","🎵 Section","🎵 Sezione","🎵 Trecho","🎵 Trecho"],"区間":["区间","Section","Section","Sezione","Trecho","Trecho"],"秒":["秒","sec","s","s","s","s"],"試聴":["试听","Preview","Écouter","Ascolta","Ouvir","Ouvir"],"▶ 試聴":["▶ 试听","▶ Preview","▶ Écouter","▶ Ascolta","▶ Ouvir","▶ Ouvir"],"⬇ 保存":["⬇ 保存","⬇ Save","⬇ Enregistrer","⬇ Salva","⬇ Salvar","⬇ Guardar"],"サンプル読込完了":["示例加载成功","Sample loaded","Démo chargée","Demo caricata","Demo carregada","Demo carregada"],"✂️ 区間別の歌声エフェクト":["✂️ 分段人声音效","✂️ Per-clip vocal effects","✂️ Effets vocaux par clip","✂️ Effetti vocali per clip","✂️ Efeitos vocais por trecho","✂️ Efeitos vocais por trecho"],"選択区間":["所选片段","Selected clip","Clip sélectionné","Clip selezionata","Trecho selecionado","Trecho selecionado"],"効果":["音效","Effect","Effet","Effetto","Efeito","Efeito"],"強さ":["强度","Strength","Intensité","Intensità","Intensidade","Intensidade"],"編集済み":["已编辑","Edited","Modifié","Modificato","Editado","Editado"],"録音":["录音","Recording","Enregistrement","Registrazione","Gravação","Gravação"],"録音中はサンプルを読み込めません。録音を終了してね":["录音时无法加载示例，请先停止录音","Stop recording before loading the demo","Arrêtez l'enregistrement avant la démo","Ferma la registrazione prima della demo","Pare a gravação antes de carregar a demo","Pare a gravação antes de carregar a demo"],"現在のBGM・テイク・歌詞・編集内容をサンプルに置き換えます。よろしいですか？":["当前BGM、录音、歌词和编辑内容会被示例覆盖，确定吗？","Replace your current BGM, takes, lyrics and edits with the demo?","Remplacer la musique, les prises, les paroles et les montages par la démo ?","Sostituire BGM, registrazioni, testo e modifiche con la demo?","Substituir o BGM, as gravações, a letra e as edições atuais pela demo?","Substituir o BGM, as gravações, a letra e as edições atuais pela demo?"],"サンプルを読み込みました。録音テイクのカット・移動を試してみてね":["示例已加载。试试裁剪和移动录音片段吧","Demo loaded. Try trimming and moving the takes","Démo chargée. Essayez de couper et déplacer les prises","Demo caricata. Prova a tagliare e spostare le registrazioni","Demo carregada. Experimente cortar e mover os trechos","Demo carregada. Experimente cortar e mover os trechos"],"BGMを読み込みました":["伴奏已加载","BGM loaded","Musique chargée","BGM caricato","BGM carregado","BGM carregado"],"再生が終了しました":["播放结束","Playback ended","Lecture terminée","Riproduzione terminata","Reprodução terminada","Reprodução terminada"],"完成版の再生が終了しました":["成品播放结束","Final mix playback ended","Lecture du mix final terminée","Riproduzione del mix finale terminata","Reprodução da mixagem final concluída","Reprodução da mistura final concluída"],"録音中は再生位置を変更できません":["录音时无法移动播放位置","Cannot seek while recording","Impossible de se déplacer pendant l'enregistrement","Impossibile spostarsi durante la registrazione","Não é possível avançar durante a gravação","Não é possível avançar durante a gravação"],"録音中は完成版を試聴できません":["录音时无法试听成品","Cannot preview while recording","Impossible d'écouter pendant l'enregistrement","Impossibile ascoltare durante la registrazione","Não é possível ouvir durante a gravação","Não é possível ouvir durante a gravação"],"完成イメージを準備中…":["正在准备成品预览…","Preparing final preview…","Préparation de l'aperçu final…","Preparazione anteprima finale…","Preparando prévia final…","A preparar pré-escuta final…"],"録音を保存しました。良かった区間を選んでね":["录音已保存，请选择最佳片段","Recording saved. Select the best parts","Prise enregistrée. Choisissez les meilleurs passages","Registrazione salvata. Seleziona le parti migliori","Gravação salva. Selecione os melhores trechos","Gravação guardada. Selecione os melhores trechos"],"🔴 録音中… BGMに合わせて歌ってね":["🔴 正在录音… 请跟随伴奏演唱","🔴 Recording… Sing along with the BGM","🔴 Enregistrement… Chantez sur la musique","🔴 Registrazione… Canta sulla base","🔴 Gravando… Cante com o BGM","🔴 A gravar… Cante com o BGM"],"マイク準備完了。ヘッドホンを使って録音しよう":["麦克风已就绪，请戴耳机录音","Mic ready. Use headphones to record","Micro prêt. Utilisez un casque","Microfono pronto. Usa le cuffie","Microfone pronto. Use fones","Microfone pronto. Use auscultadores"],"録音中です。先に「録音終了」を押してください。":["正在录音，请先点击“停止录音”。","Recording in progress. Press Stop recording first.","Enregistrement en cours. Arrêtez-le d'abord.","Registrazione in corso. Fermala prima.","Gravação em andamento. Pare primeiro.","Gravação em curso. Pare primeiro."],"完成版を再生中。同じボタンでもう一度押すと停止します":["成品播放中，再次点击同一按钮可停止","Playing final mix. Click the same button to stop","Lecture du mix final. Cliquez à nouveau pour arrêter","Riproduzione mix finale. Clicca di nuovo per fermare","Reproduzindo mixagem. Clique novamente para parar","A reproduzir mistura. Clique novamente para parar"],"■ 完成版の試聴を停止しました":["■ 已停止成品试听","■ Final preview stopped","■ Aperçu final arrêté","■ Anteprima finale fermata","■ Prévia final interrompida","■ Pré-escuta final interrompida"],"■ 試聴を停止しました":["■ 已停止试听","■ Preview stopped","■ Aperçu arrêté","■ Anteprima fermata","■ Prévia interrompida","■ Pré-escuta interrompida"],"WAVを書き出しています…":["正在导出WAV…","Exporting WAV…","Export WAV en cours…","Esportazione WAV…","Exportando WAV…","A exportar WAV…"],"書き出し完了！":["导出完成！","Export complete!","Export terminé !","Esportazione completata!","Exportação concluída!","Exportação concluída!"],"まず音楽を読み込んでね":["请先加载音乐","Load music first","Chargez d'abord la musique","Prima carica la musica","Carregue a música primeiro","Carregue a música primeiro"],"テイクを選択してね":["请选择录音","Choose a take","Choisissez une prise","Seleziona una registrazione","Selecione uma gravação","Selecione uma gravação"],"選択した歌声の区間を再生中":["正在播放所选人声片段","Playing selected vocal clip","Lecture du clip vocal sélectionné","Riproduzione clip vocale selezionata","Reproduzindo trecho vocal selecionado","A reproduzir trecho vocal selecionado"],"区間を選択してね":["请选择片段","Select a clip","Sélectionnez un clip","Seleziona una clip","Selecione um trecho","Selecione um trecho"],"編集しました":["已编辑","Edited","Modifié","Modificato","Editado","Editado"],"選択した区間":["所选片段","Selected clip","Clip sélectionné","Clip selezionata","Trecho selecionado","Trecho selecionado"],"直前の採用区間編集を取り消しました":["已撤销上一次片段编辑","Last clip edit undone","Dernière modification annulée","Ultima modifica annullata","Última edição desfeita","Última edição anulada"],"これ以上取り消せません":["无法继续撤销","Nothing more to undo","Plus rien à annuler","Niente altro da annullare","Nada mais para desfazer","Nada mais para anular"]};
+ const select=document.getElementById('uiLanguage');
+ const originals=new WeakMap();
+ const excludedIds=new Set(['lyricsInput','lyricsView']);
+ const noTranslateParents=new Set(['SCRIPT','STYLE','TEXTAREA','IFRAME','OPTION']);
+ const keys=Object.keys(dictionary).sort((a,b)=>b.length-a.length);
+ // Dynamic labels use Japanese as their source, even if another language was previously selected.
+ function localize(raw){
+   const lang=select.value,idx=langs.indexOf(lang);
+   if(idx<0||!raw)return raw;
+   const stripped=raw.trim();
+   if(dictionary[stripped])return raw.replace(stripped,dictionary[stripped][idx]);
+   // Match fragments in complex labels (clip index, times, effect descriptions).
+   let out=raw;
+   for(const k of keys){
+     if(k.length<2||!out.includes(k))continue;
+     const translated=dictionary[k][idx];
+     if(translated)out=out.split(k).join(translated);
+   }
+   return out;
+ }
+ function blocked(node){
+   let el=node.parentElement;
+   while(el){
+     if(excludedIds.has(el.id)||noTranslateParents.has(el.tagName)||el.isContentEditable)return true;
+     // Never rewrite imported filenames / user-selected names.
+     if(el.id==='fileInfo'&&!el.textContent.includes('サンプル'))return true;
+     el=el.parentElement;
+   }
+   return false;
+ }
+ let applying=false,scheduled=false;
+ function updateNode(node){
+   if(node.nodeType===3){
+     if(blocked(node))return;
+     // If any runtime code replaced the node contents, remember the new Japanese source.
+     const saved=originals.get(node);
+     const current=node.nodeValue;
+     const base=saved&&current===saved.output?saved.source:current;
+     const localized=localize(base);
+     originals.set(node,{source:base,output:localized});
+     if(current!==localized)node.nodeValue=localized;
+   }else if(node.nodeType===1){
+     if(noTranslateParents.has(node.tagName))return;
+     if(node.tagName==='INPUT'&&node.placeholder){
+       const old=node.dataset.originalPlaceholder??node.placeholder;
+       node.dataset.originalPlaceholder=old;node.placeholder=localize(old);
+     }
+     for(const child of node.childNodes)updateNode(child);
+   }
+ }
+ function apply(){
+   if(applying)return;
+   applying=true;
+   updateNode(document.body);
+   document.documentElement.lang=select.value;
+   applying=false;
+ }
+ function schedule(){if(scheduled||applying)return;scheduled=true;queueMicrotask(()=>{scheduled=false;apply()})}
+ select.addEventListener('change',apply);
+ const observer=new MutationObserver(schedule);
+ observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:false});
+ // Native dialogs also show localized UI instead of Japanese-only warnings.
+ const originalAlert=window.alert.bind(window),originalConfirm=window.confirm.bind(window);
+ window.alert=message=>originalAlert(localize(String(message)));
+ window.confirm=message=>originalConfirm(localize(String(message)));
+ apply();
+})();
+</script>
+<script>
+(()=>{
+  const button=document.getElementById('themeToggle');
+  const label=document.getElementById('themeLabel');
+  const lang=document.getElementById('uiLanguage');
+  const names={ja:['🌙 ダークモード','☀️ ホワイトモード','🌙 ダークモードに切り替える','☀️ ホワイトモードに切り替える'],zh:['🌙 深色模式','☀️ 浅色模式','🌙 切换至深色模式','☀️ 切换至浅色模式'],en:['🌙 Dark mode','☀️ Light mode','🌙 Switch to dark mode','☀️ Switch to light mode'],fr:['🌙 Mode sombre','☀️ Mode clair','🌙 Passer au mode sombre','☀️ Passer au mode clair'],it:['🌙 Modalità scura','☀️ Modalità chiara','🌙 Passa alla modalità scura','☀️ Passa alla modalità chiara'],'pt-BR':['🌙 Modo escuro','☀️ Modo claro','🌙 Mudar para modo escuro','☀️ Mudar para modo claro'],'pt-PT':['🌙 Modo escuro','☀️ Modo claro','🌙 Mudar para modo escuro','☀️ Mudar para modo claro']};
+  const storageKey='makevocal-ui-theme';
+  let theme='dark';
+  try{if(localStorage.getItem(storageKey)==='light')theme='light'}catch(e){}
+  function draw(){
+    document.documentElement.dataset.theme=theme;
+    const a=names[lang.value]||names.ja;
+    label.textContent=theme==='dark'?a[0]:a[1];
+    button.textContent=theme==='dark'?a[1]:a[0];
+    button.setAttribute('aria-label',theme==='dark'?a[3]:a[2]);
+    button.setAttribute('aria-pressed',String(theme==='light'));
+    button.title=theme==='dark'?a[3]:a[2];
+  }
+  button.addEventListener('click',()=>{document.documentElement.classList.add('theme-animate');theme=theme==='dark'?'light':'dark';try{localStorage.setItem(storageKey,theme)}catch(e){}draw()});
+  lang.addEventListener('change',draw);
+  draw();
+})();
+</script>
+</body></html>
